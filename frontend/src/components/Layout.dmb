@@ -1,0 +1,153 @@
+import { useEffect, useMemo, useState } from "react";
+
+export default function Layout({
+  brandTitle,
+  brandSubtitle,
+  navItems,
+  currentPage,
+  onNavigate,
+  headerTitle,
+  headerSubtitle,
+  userLabel,
+  roleLabel,
+  onLogout,
+  children
+}) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // ✅ si estás en una página report_* abrimos el grupo por defecto
+  const inReports = useMemo(() => String(currentPage || "").startsWith("reports_"), [currentPage]);
+  const [reportsOpen, setReportsOpen] = useState(inReports);
+
+  useEffect(() => {
+    if (inReports) setReportsOpen(true);
+  }, [inReports]);
+
+  function go(pageKey) {
+    onNavigate(pageKey);
+    setSidebarOpen(false);
+  }
+
+  // Cerrar con ESC
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === "Escape") setSidebarOpen(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  return (
+    <div className={`app-shell ${sidebarOpen ? "sidebar-open" : ""}`}>
+      {/* overlay (solo mobile) */}
+      <div className="overlay" onClick={() => setSidebarOpen(false)} />
+
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="sidebar-logo">
+            <img src="/logo.png" alt="Fabric Inventory" />
+          </div>
+          <div>
+            <div className="brand-title">{brandTitle}</div>
+            <div className="brand-sub">{brandSubtitle}</div>
+          </div>
+        </div>
+
+        <nav className="nav">
+          {navItems.map((it) => {
+            const hasChildren = Array.isArray(it.children) && it.children.length > 0;
+
+            if (!hasChildren) {
+              return (
+                <button
+                  key={it.key}
+                  className={`nav-btn ${currentPage === it.key ? "active" : ""}`}
+                  onClick={() => go(it.key)}
+                  type="button"
+                >
+                  <span className="nav-icon">{it.icon}</span>
+                  <span className="nav-label">{it.label}</span>
+                </button>
+              );
+            }
+
+            // ✅ Grupo colapsable (Reportes)
+            const groupActive =
+              currentPage === it.key ||
+              it.children.some((c) => String(c.key) === String(currentPage));
+
+            const isOpen = it.key === "reports" ? reportsOpen : true;
+
+            return (
+              <div key={it.key} className={`nav-group ${groupActive ? "active" : ""}`}>
+                <button
+                  className={`nav-btn nav-group-btn ${groupActive ? "active" : ""}`}
+                  type="button"
+                  onClick={() => {
+                    if (it.key === "reports") setReportsOpen((v) => !v);
+                    else go(it.key);
+                  }}
+                >
+                  <span className="nav-icon">{it.icon}</span>
+                  <span className="nav-label">{it.label}</span>
+                  <span className={`nav-caret ${isOpen ? "open" : ""}`}>▾</span>
+                </button>
+
+                {isOpen && (
+                  <div className="nav-sub">
+                    {it.children.map((c) => (
+                      <button
+                        key={c.key}
+                        className={`nav-sub-btn ${currentPage === c.key ? "active" : ""}`}
+                        type="button"
+                        onClick={() => go(c.key)}
+                      >
+                        <span className="nav-sub-dot">•</span>
+                        <span className="nav-label">{c.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </nav>
+      </aside>
+
+      <main className="main">
+        <header className="header">
+          <div className="header-left">
+            {/* botón hamburguesa (solo mobile) */}
+            <button
+              className="btn btn-icon hamburger"
+              type="button"
+              onClick={() => setSidebarOpen((v) => !v)}
+              aria-label="Menu"
+              title="Menu"
+            >
+              ☰
+            </button>
+
+            <div>
+              <div className="page-title">{headerTitle}</div>
+              <div className="page-sub">{headerSubtitle}</div>
+            </div>
+          </div>
+
+          <div className="header-right">
+            <span className="pill">
+              {userLabel}: <b style={{ marginLeft: 4 }}>{roleLabel}</b>
+            </span>
+
+            <button className="btn" onClick={onLogout} type="button" title="Salir">
+              ⎋
+            </button>
+          </div>
+        </header>
+
+        <div className="content">{children}</div>
+      </main>
+    </div>
+  );
+}
+

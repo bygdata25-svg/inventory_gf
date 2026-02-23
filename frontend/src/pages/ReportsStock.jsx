@@ -1,0 +1,199 @@
+import { useEffect, useMemo, useState } from "react";
+import { t } from "../i18n";
+
+export default function ReportsStock({ api, apiBase }) {
+  const [rows, setRows] = useState([]);
+  const [error, setError] = useState("");
+  const [onlyAvailable, setOnlyAvailable] = useState(true);
+
+  // filters
+  const [q, setQ] = useState("");
+  const [supplier, setSupplier] = useState("");
+
+  function showApiError(e) {
+    const d = e?.detail;
+    if (typeof d === "string") return setError(d);
+    if (d?.detail && typeof d.detail === "string") return setError(d.detail);
+    return setError(t("ui.error"));
+  }
+
+  async function load() {
+    setError("");
+    const data = await api.request(
+      `${apiBase}/api/reports/stock?only_available=${onlyAvailable ? "true" : "false"}`
+    );
+    setRows(Array.isArray(data) ? data : []);
+  }
+
+  useEffect(() => {
+    load().catch(showApiError);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onlyAvailable]);
+
+  const suppliers = useMemo(() => {
+    const map = new Map();
+    for (const r of rows) {
+      if (r.supplier_id) map.set(String(r.supplier_id), r.supplier_name || `#${r.supplier_id}`);
+    }
+    return Array.from(map.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [rows]);
+
+  const filtered = useMemo(() => {
+    const term = (q || "").trim().toLowerCase();
+
+    return rows.filter((r) => {
+      if (supplier && String(r.supplier_id || "") !== String(supplier)) return false;
+      if (!term) return true;
+
+      const hay =
+        `${r.fabric_code || ""} ${r.fabric_name || ""} ${r.fabric_color || ""} ${r.location || ""} ${r.lot_number || ""} ${r.supplier_name || ""}`
+          .toLowerCase();
+
+      return hay.includes(term);
+    });
+  }, [rows, q, supplier]);
+
+  const totalMeters = useMemo(
+    () => filtered.reduce((acc, r) => acc + Number(r.meters_available || 0), 0),
+    [filtered]
+  );
+
+  const totalValue = useMemo(() => {
+    return filtered.reduce((acc, r) => {
+      const ppm = r.price_per_meter != null ? Number(r.price_per_meter) : null;
+      if (ppm == null) return acc;
+      return acc + ppm * Number(r.meters_available || 0);
+    }, 0);
+  }, [filtered]);
+
+  return (
+    <>
+      <div className="card">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 12,
+            alignItems: "baseline",
+            flexWrap: "wrap"
+          }}
+        >
+          <div>
+            <h2 style={{ margin: 0 }}>{t("reports.stock.title")}</h2>
+            <div style={{ color: "var(--muted)", fontSize: 13, marginTop: 4 }}>
+              {t("reports.stock.subtitle")}
+            </div>
+          </div>
+
+          <button className="btn" type="button" onClick={() => load().catch(showApiError)}>
+            {t("actions.refresh")}
+          </button>
+        </div>
+
+        <div
+          style={{
+            marginTop: 12,
+            display: "flex",
+            gap: 10,
+            flexWrap: "wrap",
+            alignItems: "end"
+          }}
+        >
+          <label style={{ minWidth: 260 }}>
+            <div className="label">{t("ui.search")}</div>
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("ui.searchHint")} />
+          </label>
+
+          <label style={{ minWidth: 220 }}>
+            <div className="label">{t("fields.supplier")}</div>
+            <select value={supplier} onChange={(e) => setSupplier(e.target.value)}>
+              <option value="">{t("ui.all")}</option>
+              {suppliers.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input type="checkbox" checked={onlyAvailable} onChange={(e) => setOnlyAvailable(e.target.checked)} />
+            <span style={{ fontSize: 13 }}>{t("reports.stock.onlyAvailable")}</span>
+          </label>
+
+          <div style={{ marginLeft: "auto", color: "var(--muted)", fontSize: 13, display: "flex", gap: 16 }}>
+            <div>
+              {t("reports.stock.total")}: <b style={{ color: "var(--text)" }}>{totalMeters}</b>
+            </div>
+            <div>
+              {t("reports.stock.value")}: <b style={{ color: "var(--text)" }}>{totalValue.toFixed(2)}</b>
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div className="alert alert-error" style={{ marginTop: 12 }}>
+            {error}
+          </div>
+        )}
+      </div>
+
+      <div className="card">
+        <div style={{ marginTop: 4, overflowX: "auto" }}>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>{t("fields.rollId")}</th>
+                <th>{t("fields.fabric")}</th>
+                <th>{t("fields.color")}</th>
+                <th>{t("fields.location")}</th>
+                <th>{t("fields.lotNumber")}</th>
+                <th>{t("fields.supplier")}</th>
+                <th>{t("fields.metersAvailable")}</th>
+                <th>{t("fields.pricePerMeter")}</th>
+                <th>{t("reports.stock.value")}</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {filtered.map((r) => {
+                const ppm = r.price_per_meter != null ? Number(r.price_per_meter) : null;
+                const val = ppm != null ? ppm * Number(r.meters_available || 0) : null;
+
+                return (
+                  <tr key={r.roll_id}>
+                    <td>#{r.roll_id}</td>
+                    <td>
+                      <b>{r.fabric_code}</b>
+                      {r.fabric_name ? ` — ${r.fabric_name}` : ""}
+                    </td>
+                    <td>{r.fabric_color || "-"}</td>
+                    <td>{r.location || "-"}</td>
+                    <td>{r.lot_number || "-"}</td>
+                    <td>{r.supplier_name || "-"}</td>
+                    <td>
+                      <b>{r.meters_available}</b>
+                    </td>
+                    <td>{ppm != null ? ppm : "-"}</td>
+                    <td>{val != null ? val.toFixed(2) : "-"}</td>
+                  </tr>
+                );
+              })}
+
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={9} style={{ color: "var(--muted)" }}>
+                    {t("reports.stock.empty")}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
+  );
+}
+

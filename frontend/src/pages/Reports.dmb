@@ -1,0 +1,93 @@
+// frontend/src/pages/Reports.jsx
+import { useMemo, useState } from "react";
+import { t } from "../i18n";
+import ReportsStock from "./ReportsStock";
+import ReportsValuation from "./ReportsValuation";
+
+export default function Reports({ api, apiBase, role }) {
+  // helper: si la key no existe, t() devuelve la misma key.
+  // con esto logramos fallback real.
+  const tt = (key, fallback = "") => {
+    const v = t(key);
+    return v === key ? fallback : v;
+  };
+
+  const reports = useMemo(
+    () => [
+      {
+        key: "stock",
+        title: tt("reports.menu.stock.title", tt("reports.tabs.stock", "Stock")),
+        desc: tt("reports.menu.stock.desc", tt("reports.stock.subtitle", tt("reports.subtitle", "")))
+      },
+      {
+        key: "values",
+        title: tt("reports.menu.values.title", "Valuación"),
+        desc: tt("reports.menu.values.desc", "")
+      }
+      // {
+      //   key: "movements",
+      //   title: tt("reports.menu.movements.title", "Movimientos"),
+      //   desc: tt("reports.menu.movements.desc", "")
+      // }
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const [current, setCurrent] = useState(reports[0]?.key || "stock");
+  const currentReport = reports.find((r) => r.key === current) || reports[0];
+
+  return (
+    <div className="grid grid-2" style={{ alignItems: "start" }}>
+      {/* Submenu */}
+      <div className="card" style={{ position: "sticky", top: 12 }}>
+        <h2 style={{ margin: 0 }}>{t("nav.reports")}</h2>
+        <div style={{ color: "var(--muted)", fontSize: 13, marginTop: 4 }}>
+          {tt("reports.subtitle", "")}
+        </div>
+
+        <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
+          {reports.map((r) => {
+            const active = r.key === current;
+            return (
+              <button
+                key={r.key}
+                type="button"
+                onClick={() => setCurrent(r.key)}
+                className={`nav-btn ${active ? "active" : ""}`}
+                style={{
+                  textAlign: "left",
+                  padding: 12,
+                  borderRadius: 12
+                }}
+              >
+                <div style={{ fontWeight: 800 }}>{r.title}</div>
+                {r.desc ? (
+                  <div style={{ marginTop: 4, fontSize: 12, color: "var(--muted)" }}>{r.desc}</div>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Contenido del reporte */}
+      <div>
+        <div className="card">
+          <h2 style={{ margin: 0 }}>{currentReport?.title}</h2>
+          {currentReport?.desc ? (
+            <div style={{ color: "var(--muted)", fontSize: 13, marginTop: 4 }}>{currentReport.desc}</div>
+          ) : null}
+        </div>
+
+        <div style={{ marginTop: 12 }}>
+          {current === "stock" && <ReportsStock api={api} apiBase={apiBase} role={role} />}
+          {current === "valuation" && <ReportsValuation api={api} apiBase={apiBase} role={role} />}
+          {current === "movements" && <ReportsMovements ... />}
+          */}
+        </div>
+      </div>
+    </div>
+  );
+}
+
