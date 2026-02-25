@@ -24,7 +24,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://fabrics-inventory-frontend.onrender.com",
+        "https://inventory-gf-fe.onrender.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
