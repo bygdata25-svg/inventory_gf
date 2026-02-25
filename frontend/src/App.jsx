@@ -15,7 +15,7 @@ import { IconSupplier } from "./components/Icons";
 
 // const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || "https://gilbert-hands-charleston-review.trycloudflare.com";
+  import.meta.env.VITE_API_BASE_URL || "https://inventory-gf.onrender.com";
 
 export default function App() {
   const [logged, setLogged] = useState(isLoggedIn());

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { t } from "../i18n";
 import { setAuth } from "../auth";
 
-const API_BASE = import.meta.env.VITE_API_URL;
+const API_BASE = import.meta.env.VITE_API_URL || "https://inventory-gf.onrender.com";
 
 export default function Login({ onLoggedIn }) {
   const [username, setUsername] = useState("admin");
