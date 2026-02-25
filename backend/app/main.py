@@ -22,12 +22,14 @@ app = FastAPI(title="Fabrics Inventory API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # MVP. Later lock this down.
+    allow_origins=[
+        "http://localhost:5173",
+        "https://fabrics-inventory-frontend.onrender.com",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 @app.on_event("startup")
 def create_tables():
