@@ -15,7 +15,7 @@ import { IconSupplier } from "./components/Icons";
 
 // const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || "https://gilbert-hands-charleston-review.trycloudflare.com";
+  import.meta.env.VITE_API_BASE_URL || "https://inventory-gf.onrender.com";
 
 export default function App() {
   const [logged, setLogged] = useState(isLoggedIn());
@@ -130,9 +130,11 @@ export default function App() {
       {page === "suppliers" && <Suppliers api={api} apiBase={API_BASE} role={role} />}
 
       {/* ✅ Los 3 reportes usan la misma página Reports, que decide qué mostrar */}
-      {(page === "reports_stock" || page === "reports_valuation" || page === "reports_movements") && (
-        <Reports api={api} apiBase={API_BASE} role={role} currentKey={page} />
-      )}
+      {page === "reports" && <Reports api={api} apiBase={API_BASE} role={role} />}
+      {page === "reports-stock" && <Reports api={api} apiBase={API_BASE} role={role} initial="stock" />}
+      {page === "reports-valuation" && <Reports api={api} apiBase={API_BASE} role={role} initial="valuation" />}
+      {page === "reports-movements" && <Reports api={api} apiBase={API_BASE} role={role} initial="movements" />}
+
     </Layout>
   );
 }

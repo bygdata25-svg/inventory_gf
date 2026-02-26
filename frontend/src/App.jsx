@@ -8,20 +8,32 @@ import Layout from "./components/Layout";
 import { clearAuth, getRole, isLoggedIn } from "./auth";
 import { makeApiClient } from "./api";
 import { t } from "./i18n";
-import { IconFabric, IconRoll, IconMove, IconUsers, IconReport } from "./components/Icons";
+import {
+  IconFabric,
+  IconRoll,
+  IconMove,
+  IconUsers,
+  IconReport,
+  IconSupplier
+} from "./components/Icons";
 import Reports from "./pages/Reports";
 import Suppliers from "./pages/Suppliers";
-import { IconSupplier } from "./components/Icons";
+
+// ✅ NUEVO: páginas para Vestidos / Préstamos
+import Dresses from "./pages/Dresses";
+import DressLoans from "./pages/DressLoans";
 
 // const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || "https://inventory-gf.onrender.com";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://inventory-gf.onrender.com";
 
 export default function App() {
   const [logged, setLogged] = useState(isLoggedIn());
   const [page, setPage] = useState("movements");
   const [me, setMe] = useState(null);
   const [sessionMsg, setSessionMsg] = useState("");
+
+  // ✅ NUEVO: contador de vencidos
+  const [overdueCount, setOverdueCount] = useState(0);
 
   const api = useMemo(
     () =>
@@ -40,11 +52,27 @@ export default function App() {
     setMe(data);
   }
 
+  // ✅ NUEVO: traer vencidos (alerta)
+  async function loadOverdueCount() {
+    try {
+      const data = await api.request(`${API_BASE}/api/alerts/overdue-loans`);
+      setOverdueCount(Array.isArray(data) ? data.length : 0);
+    } catch {
+      // si algo falla, no rompemos la UI
+      setOverdueCount(0);
+    }
+  }
+
   useEffect(() => {
     if (logged) {
       loadMe().catch(() => {
         // ignore
       });
+
+      // cargar vencidos al inicio y refrescar cada 60s
+      loadOverdueCount();
+      const id = setInterval(loadOverdueCount, 60000);
+      return () => clearInterval(id);
     }
   }, [logged]);
 
@@ -81,6 +109,14 @@ export default function App() {
     { key: "rolls", label: t("nav.rolls"), icon: <IconRoll /> },
     { key: "movements", label: t("nav.movements"), icon: <IconMove /> },
 
+    // ✅ NUEVO: módulo Vestidos / Préstamos
+    { key: "dresses", label: "Vestidos", icon: <IconFabric /> },
+    {
+      key: "dress_loans",
+      label: `Préstamos${overdueCount ? ` (${overdueCount})` : ""}`,
+      icon: <IconMove />
+    },
+
     // ✅ Reportes con submenu
     {
       key: "reports",
@@ -104,6 +140,10 @@ export default function App() {
     rolls: t("nav.rolls"),
     movements: t("nav.movements"),
     users: t("nav.users"),
+
+    // ✅ NUEVO
+    dresses: "Vestidos",
+    dress_loans: "Préstamos",
 
     reports_stock: t("reports.menu.stock.title") || t("nav.reports"),
     reports_valuation: t("reports.menu.values.title") || t("nav.reports"),
@@ -129,13 +169,15 @@ export default function App() {
       {page === "users" && role === "ADMIN" && <Users api={api} apiBase={API_BASE} role={role} />}
       {page === "suppliers" && <Suppliers api={api} apiBase={API_BASE} role={role} />}
 
+      {/* ✅ NUEVO: páginas del módulo Vestidos */}
+      {page === "dresses" && <Dresses api={api} apiBase={API_BASE} role={role} />}
+      {page === "dress_loans" && <DressLoans api={api} apiBase={API_BASE} role={role} />}
+
       {/* ✅ Los 3 reportes usan la misma página Reports, que decide qué mostrar */}
       {page === "reports" && <Reports api={api} apiBase={API_BASE} role={role} />}
-      {page === "reports-stock" && <Reports api={api} apiBase={API_BASE} role={role} initial="stock" />}
-      {page === "reports-valuation" && <Reports api={api} apiBase={API_BASE} role={role} initial="valuation" />}
-      {page === "reports-movements" && <Reports api={api} apiBase={API_BASE} role={role} initial="movements" />}
-
+      {page === "reports_stock" && <Reports api={api} apiBase={API_BASE} role={role} initial="stock" />}
+      {page === "reports_valuation" && <Reports api={api} apiBase={API_BASE} role={role} initial="valuation" />}
+      {page === "reports_movements" && <Reports api={api} apiBase={API_BASE} role={role} initial="movements" />}
     </Layout>
   );
 }
-
