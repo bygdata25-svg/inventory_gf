@@ -1,5 +1,6 @@
 from app.models import fabric  # noqa: F401
 from app.models import roll    # noqa: F401
+from app.models import dress, dress_loan  # noqa: F401
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes.fabrics import router as fabrics_router
@@ -15,6 +16,9 @@ from app.models import roll
 from app.models import stock_movement
 from app.models import supplier
 from app.models import user
+from app.api.dresses import router as dresses_router
+from app.api.dress_loans import router as dress_loans_router
+from app.api.alerts import router as alerts_router
 
 
 
@@ -45,3 +49,6 @@ app.include_router(stock_movements_router, prefix="/api")
 app.include_router(auth_router)
 app.include_router(reports_router)
 app.include_router(suppliers_router, prefix="/api")
+app.include_router(dresses_router)
+app.include_router(dress_loans_router)
+app.include_router(alerts_router)
