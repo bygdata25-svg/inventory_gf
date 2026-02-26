@@ -188,21 +188,21 @@
 
   }
 },
-loan: {
-  status: {
-    OPEN: "Abierto",
-    RETURNED: "Devuelto",
-    CANCELLED: "Cancelado",
-    OVERDUE: "Vencido"
+"loan": {
+  "status": {
+   "OPEN": "Abierto",
+    "RETURNED": "Devuelto",
+    "CANCELLED": "Cancelado",
+    "OVERDUE": "Vencido"
   }
 },
-dress: {
-  status: {
-    AVAILABLE: "Disponible",
-    LOANED: "Prestado",
-    CLEANING: "Limpieza",
-    MAINTENANCE: "Mantenimiento",
-    RETIRED: "Baja"
+"dress": {
+  "status": {
+    "AVAILABLE": "Disponible",
+    "LOANED": "Prestado",
+    "CLEANING": "Limpieza",
+    "MAINTENANCE": "Mantenimiento",
+    "RETIRED": "Baja"
   }
 }
 }
