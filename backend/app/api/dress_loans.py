@@ -8,7 +8,7 @@ from app.db.session import get_db
 from app.models.user import User
 from app.models.dress import Dress, DressStatus
 from app.models.dress_loan import DressLoan, LoanStatus
-from app.schema.dress_loan import LoanCreate, LoanOut, LoanReturn
+from app.schemas.dress_loan import LoanCreate, LoanOut, LoanReturn
 
 from app.core.authz import get_current_user# <-- AJUSTAR según tu proyecto
 
