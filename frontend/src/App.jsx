@@ -22,6 +22,7 @@ import Suppliers from "./pages/Suppliers";
 // ✅ NUEVO: páginas para Vestidos / Préstamos
 import Dresses from "./pages/Dresses";
 import DressLoans from "./pages/DressLoans";
+import Badge from "./components/Badge";
 
 // const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://inventory-gf.onrender.com";
@@ -112,9 +113,18 @@ export default function App() {
     // ✅ NUEVO: módulo Vestidos / Préstamos
     { key: "dresses", label: "Vestidos", icon: <IconFabric /> },
     {
-      key: "dress_loans",
-      label: `Préstamos${overdueCount ? ` (${overdueCount})` : ""}`,
-      icon: <IconMove />
+    key: "dress_loans",
+    label: (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+      Préstamos
+      {overdueCount > 0 && (
+        <Badge variant="red" pulse>
+          {overdueCount}
+        </Badge>
+      )}
+    </span>
+  ),
+  icon: <IconMove />
     },
 
     // ✅ Reportes con submenu

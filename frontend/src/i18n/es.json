@@ -187,6 +187,23 @@
     "supplierNameExists": "Ya existe un proveedor con ese nombre"
 
   }
+},
+loan: {
+  status: {
+    OPEN: "Abierto",
+    RETURNED: "Devuelto",
+    CANCELLED: "Cancelado",
+    OVERDUE: "Vencido"
+  }
+},
+dress: {
+  status: {
+    AVAILABLE: "Disponible",
+    LOANED: "Prestado",
+    CLEANING: "Limpieza",
+    MAINTENANCE: "Mantenimiento",
+    RETIRED: "Baja"
+  }
 }
 }
 
