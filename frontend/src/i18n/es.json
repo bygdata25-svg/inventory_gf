@@ -202,7 +202,8 @@
     "LOANED": "Prestado",
     "CLEANING": "Limpieza",
     "MAINTENANCE": "Mantenimiento",
-    "RETIRED": "Baja"
+    "RETIRED": "Baja",
+    "SOLD": "Vendido"
   }
 }
 }

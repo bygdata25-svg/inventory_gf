@@ -1,23 +1,31 @@
 // frontend/src/pages/Dresses.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Badge from "../components/Badge";
 import { dressStatusLabel } from "../utils/status";
+import { t } from "../i18n";
 
 export default function Dresses({ api, apiBase, role }) {
+  const canEdit = role === "ADMIN" || role === "OPERATOR";
+
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Alta vestido
   const [form, setForm] = useState({
     code: "",
     name: "",
     size: "",
     color: "",
-    notes: ""
+    notes: "",
+    photo_url: ""
   });
 
-  // Si no es null, estamos prestando y contiene los datos a enviar
+  // Modal préstamo
   const [loanForm, setLoanForm] = useState(null);
+
+  // Modal venta
+  const [saleForm, setSaleForm] = useState(null);
 
   async function load() {
     setLoading(true);
@@ -26,7 +34,7 @@ export default function Dresses({ api, apiBase, role }) {
       const data = await api.request(`${apiBase}/api/dresses`);
       setItems(Array.isArray(data) ? data : []);
     } catch (e) {
-      setError(e?.detail || "Error");
+      setError(e?.detail || t("ui.error"));
       setItems([]);
     } finally {
       setLoading(false);
@@ -39,6 +47,8 @@ export default function Dresses({ api, apiBase, role }) {
 
   async function createDress(e) {
     e.preventDefault();
+    if (!canEdit) return;
+
     try {
       await api.request(`${apiBase}/api/dresses`, {
         method: "POST",
@@ -48,10 +58,12 @@ export default function Dresses({ api, apiBase, role }) {
           name: form.name,
           size: form.size || null,
           color: form.color || null,
-          notes: form.notes || null
+          notes: form.notes || null,
+          photo_url: form.photo_url || null
         })
       });
-      setForm({ code: "", name: "", size: "", color: "", notes: "" });
+
+      setForm({ code: "", name: "", size: "", color: "", notes: "", photo_url: "" });
       load();
     } catch (e) {
       alert(e?.detail || "Error creando vestido");
@@ -60,6 +72,8 @@ export default function Dresses({ api, apiBase, role }) {
 
   async function createLoan(e) {
     e.preventDefault();
+    if (!canEdit) return;
+
     try {
       await api.request(`${apiBase}/api/dress-loans`, {
         method: "POST",
@@ -73,12 +87,38 @@ export default function Dresses({ api, apiBase, role }) {
     }
   }
 
+  async function createSale(e) {
+    e.preventDefault();
+    if (!canEdit) return;
+
+    try {
+      await api.request(`${apiBase}/api/dress-sales`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dress_id: saleForm.dress_id,
+          sold_price: Number(saleForm.sold_price),
+          buyer_name: saleForm.buyer_name || null,
+          notes: saleForm.notes || null
+        })
+      });
+
+      setSaleForm(null);
+      load();
+    } catch (e) {
+      alert(e?.detail || "Error registrando venta");
+    }
+  }
+
   function DressStatusBadge({ status }) {
     if (status === "AVAILABLE") return <Badge variant="green">{dressStatusLabel(status)}</Badge>;
     if (status === "LOANED") return <Badge variant="red">{dressStatusLabel(status)}</Badge>;
+    if (status === "SOLD") return <Badge variant="red">{dressStatusLabel(status)}</Badge>;
     if (status === "CLEANING") return <Badge variant="yellow">{dressStatusLabel(status)}</Badge>;
     return <Badge variant="default">{dressStatusLabel(status)}</Badge>;
   }
+
+  const tableRows = useMemo(() => items || [], [items]);
 
   return (
     <div>
@@ -86,7 +126,7 @@ export default function Dresses({ api, apiBase, role }) {
 
       {error && <div className="alert alert-error">{String(error)}</div>}
 
-      {(role === "ADMIN" || role === "OPERATOR") && (
+      {canEdit && (
         <form onSubmit={createDress} style={{ marginBottom: 18 }}>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <input
@@ -112,12 +152,18 @@ export default function Dresses({ api, apiBase, role }) {
               onChange={(e) => setForm({ ...form, color: e.target.value })}
             />
             <input
+              placeholder="Foto (URL)"
+              value={form.photo_url}
+              onChange={(e) => setForm({ ...form, photo_url: e.target.value })}
+              style={{ minWidth: 260 }}
+            />
+            <input
               placeholder="Notas"
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               style={{ minWidth: 240 }}
             />
-            <button type="submit">Crear</button>
+            <button type="submit">{t("actions.create") || "Crear"}</button>
           </div>
         </form>
       )}
@@ -127,6 +173,7 @@ export default function Dresses({ api, apiBase, role }) {
       <table>
         <thead>
           <tr>
+            <th>Foto</th>
             <th>Código</th>
             <th>Nombre</th>
             <th>Talle</th>
@@ -136,8 +183,28 @@ export default function Dresses({ api, apiBase, role }) {
           </tr>
         </thead>
         <tbody>
-          {items.map((d) => (
+          {tableRows.map((d) => (
             <tr key={d.id}>
+              <td>
+                {d.photo_url ? (
+                  <img
+                    src={d.photo_url}
+                    alt={d.name}
+                    style={{
+                      width: 44,
+                      height: 44,
+                      objectFit: "cover",
+                      borderRadius: 10,
+                      border: "1px solid rgba(0,0,0,.10)"
+                    }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <span style={{ opacity: 0.6 }}>—</span>
+                )}
+              </td>
               <td>{d.code}</td>
               <td>{d.name}</td>
               <td>{d.size}</td>
@@ -145,33 +212,50 @@ export default function Dresses({ api, apiBase, role }) {
               <td>
                 <DressStatusBadge status={d.status} />
               </td>
-              <td>
-                {d.status === "AVAILABLE" && (role === "ADMIN" || role === "OPERATOR") && (
-                  <button
-                    onClick={() =>
-                      setLoanForm({
-                        dress_id: d.id,
-                        customer_name: "",
-                        customer_dni: "",
-                        customer_phone: "",
-                        customer_email: "",
-                        event_name: "",
-                        loan_days: 3,
-                        picked_up_by: "",
-                        notes: ""
-                      })
-                    }
-                  >
-                    Prestar
-                  </button>
+              <td style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {canEdit && d.status === "AVAILABLE" && (
+                  <>
+                    <button
+                      onClick={() =>
+                        setLoanForm({
+                          dress_id: d.id,
+                          customer_name: "",
+                          customer_dni: "",
+                          customer_phone: "",
+                          customer_email: "",
+                          event_name: "",
+                          loan_days: 3,
+                          picked_up_by: "",
+                          notes: ""
+                        })
+                      }
+                      type="button"
+                    >
+                      Prestar
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        setSaleForm({
+                          dress_id: d.id,
+                          sold_price: "",
+                          buyer_name: "",
+                          notes: ""
+                        })
+                      }
+                      type="button"
+                    >
+                      Vender
+                    </button>
+                  </>
                 )}
               </td>
             </tr>
           ))}
 
-          {!loading && items.length === 0 && (
+          {!loading && tableRows.length === 0 && (
             <tr>
-              <td colSpan={6} style={{ opacity: 0.7 }}>
+              <td colSpan={7} style={{ opacity: 0.7 }}>
                 Sin resultados
               </td>
             </tr>
@@ -179,76 +263,162 @@ export default function Dresses({ api, apiBase, role }) {
         </tbody>
       </table>
 
+      {/* =============== MODAL PRÉSTAMO =============== */}
       {loanForm && (
-        <div style={{ marginTop: 18 }}>
-          <h3>Nuevo préstamo</h3>
-
-          <form onSubmit={createLoan}>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <input
-                placeholder="Nombre cliente"
-                required
-                value={loanForm.customer_name || ""}
-                onChange={(e) => setLoanForm({ ...loanForm, customer_name: e.target.value })}
-              />
-
-              <input
-                placeholder="DNI"
-                value={loanForm.customer_dni || ""}
-                onChange={(e) => setLoanForm({ ...loanForm, customer_dni: e.target.value })}
-              />
-
-              <input
-                placeholder="Teléfono"
-                value={loanForm.customer_phone || ""}
-                onChange={(e) => setLoanForm({ ...loanForm, customer_phone: e.target.value })}
-              />
-
-              <input
-                placeholder="Email"
-                value={loanForm.customer_email || ""}
-                onChange={(e) => setLoanForm({ ...loanForm, customer_email: e.target.value })}
-              />
-
-              <input
-                placeholder="Evento"
-                value={loanForm.event_name || ""}
-                onChange={(e) => setLoanForm({ ...loanForm, event_name: e.target.value })}
-              />
-
-              <input
-                type="number"
-                placeholder="Días"
-                min={1}
-                max={60}
-                value={loanForm.loan_days || 3}
-                onChange={(e) => setLoanForm({ ...loanForm, loan_days: Number(e.target.value) })}
-                style={{ width: 110 }}
-              />
-
-              <input
-                placeholder="Retira"
-                value={loanForm.picked_up_by || ""}
-                onChange={(e) => setLoanForm({ ...loanForm, picked_up_by: e.target.value })}
-              />
-
-              <input
-                placeholder="Notas"
-                value={loanForm.notes || ""}
-                onChange={(e) => setLoanForm({ ...loanForm, notes: e.target.value })}
-                style={{ minWidth: 240 }}
-              />
-            </div>
-
-            <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
-              <button type="submit">Confirmar</button>
-              <button type="button" onClick={() => setLoanForm(null)}>
-                Cancelar
+        <div className="modal-overlay" onClick={() => setLoanForm(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>Nuevo préstamo</h3>
+              <button className="btn btn-icon" type="button" onClick={() => setLoanForm(null)}>
+                ✕
               </button>
             </div>
-          </form>
+
+            <form onSubmit={createLoan}>
+              <div className="modal-grid">
+                <input
+                  placeholder="Nombre cliente"
+                  required
+                  value={loanForm.customer_name || ""}
+                  onChange={(e) => setLoanForm({ ...loanForm, customer_name: e.target.value })}
+                />
+                <input
+                  placeholder="DNI"
+                  value={loanForm.customer_dni || ""}
+                  onChange={(e) => setLoanForm({ ...loanForm, customer_dni: e.target.value })}
+                />
+                <input
+                  placeholder="Teléfono"
+                  value={loanForm.customer_phone || ""}
+                  onChange={(e) => setLoanForm({ ...loanForm, customer_phone: e.target.value })}
+                />
+                <input
+                  placeholder="Email"
+                  value={loanForm.customer_email || ""}
+                  onChange={(e) => setLoanForm({ ...loanForm, customer_email: e.target.value })}
+                />
+                <input
+                  placeholder="Evento"
+                  value={loanForm.event_name || ""}
+                  onChange={(e) => setLoanForm({ ...loanForm, event_name: e.target.value })}
+                />
+                <input
+                  type="number"
+                  placeholder="Días"
+                  min={1}
+                  max={60}
+                  value={loanForm.loan_days || 3}
+                  onChange={(e) => setLoanForm({ ...loanForm, loan_days: Number(e.target.value) })}
+                />
+                <input
+                  placeholder="Retira"
+                  value={loanForm.picked_up_by || ""}
+                  onChange={(e) => setLoanForm({ ...loanForm, picked_up_by: e.target.value })}
+                />
+                <input
+                  placeholder="Notas"
+                  value={loanForm.notes || ""}
+                  onChange={(e) => setLoanForm({ ...loanForm, notes: e.target.value })}
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button type="submit">Confirmar</button>
+                <button type="button" onClick={() => setLoanForm(null)}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
+
+      {/* =============== MODAL VENTA =============== */}
+      {saleForm && (
+        <div className="modal-overlay" onClick={() => setSaleForm(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>Registrar venta</h3>
+              <button className="btn btn-icon" type="button" onClick={() => setSaleForm(null)}>
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={createSale}>
+              <div className="modal-grid">
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  placeholder="Precio de venta"
+                  required
+                  value={saleForm.sold_price}
+                  onChange={(e) => setSaleForm({ ...saleForm, sold_price: e.target.value })}
+                />
+                <input
+                  placeholder="Comprador (opcional)"
+                  value={saleForm.buyer_name || ""}
+                  onChange={(e) => setSaleForm({ ...saleForm, buyer_name: e.target.value })}
+                />
+                <input
+                  placeholder="Notas (opcional)"
+                  value={saleForm.notes || ""}
+                  onChange={(e) => setSaleForm({ ...saleForm, notes: e.target.value })}
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button type="submit">Confirmar venta</button>
+                <button type="button" onClick={() => setSaleForm(null)}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ======= estilos mínimos de modal (podés mover a tu css global) ======= */}
+      <style>{`
+        .modal-overlay{
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,.35);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 18px;
+          z-index: 999;
+        }
+        .modal{
+          width: min(860px, 100%);
+          background: #fff;
+          border-radius: 14px;
+          border: 1px solid rgba(0,0,0,.12);
+          box-shadow: 0 12px 40px rgba(0,0,0,.18);
+          padding: 14px;
+        }
+        .modal-head{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap: 10px;
+          margin-bottom: 12px;
+        }
+        .modal-grid{
+          display:grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+        .modal-actions{
+          display:flex;
+          gap: 10px;
+          margin-top: 12px;
+        }
+        @media (max-width: 720px){
+          .modal-grid{ grid-template-columns: 1fr; }
+        }
+      `}</style>
     </div>
   );
 }
