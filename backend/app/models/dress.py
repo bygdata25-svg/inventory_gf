@@ -15,6 +15,7 @@ class DressStatus(str, Enum):
     CLEANING = "CLEANING"
     MAINTENANCE = "MAINTENANCE"
     RETIRED = "RETIRED"
+    SOLD = "SOLD"
 
 
 class Dress(Base):
@@ -31,3 +32,4 @@ class Dress(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
 
     loans: Mapped[list["DressLoan"]] = relationship(back_populates="dress")
+    photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)

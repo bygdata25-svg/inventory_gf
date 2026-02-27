@@ -10,6 +10,7 @@ class DressCreate(BaseModel):
     size: Optional[str] = None
     color: Optional[str] = None
     notes: Optional[str] = None
+    photo_url: Optional[str] = None
 
 
 class DressOut(BaseModel):
@@ -21,6 +22,7 @@ class DressOut(BaseModel):
     status: DressStatus
     notes: Optional[str]
     created_at: datetime
+    photo_url: Optional[str]
 
     class Config:
         from_attributes = True
