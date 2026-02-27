@@ -110,13 +110,27 @@ export default function Dresses({ api, apiBase, role }) {
     }
   }
 
-  function DressStatusBadge({ status }) {
-    if (status === "AVAILABLE") return <Badge variant="green">{dressStatusLabel(status)}</Badge>;
-    if (status === "LOANED") return <Badge variant="red">{dressStatusLabel(status)}</Badge>;
-    if (status === "SOLD") return <Badge variant="red">{dressStatusLabel(status)}</Badge>;
-    if (status === "CLEANING") return <Badge variant="yellow">{dressStatusLabel(status)}</Badge>;
+function DressStatusBadge({ status }) {
+  if (status === "AVAILABLE")
+    return <Badge variant="green">{dressStatusLabel(status)}</Badge>;
+
+  if (status === "LOANED")
+    return <Badge variant="orange">{dressStatusLabel(status)}</Badge>;
+
+  if (status === "SOLD")
+    return <Badge variant="blue">{dressStatusLabel(status)}</Badge>;
+
+  if (status === "CLEANING")
+    return <Badge variant="yellow">{dressStatusLabel(status)}</Badge>;
+
+  if (status === "MAINTENANCE")
     return <Badge variant="default">{dressStatusLabel(status)}</Badge>;
-  }
+
+  if (status === "RETIRED")
+    return <Badge variant="default">{dressStatusLabel(status)}</Badge>;
+
+  return <Badge variant="default">{status}</Badge>;
+}
 
   const tableRows = useMemo(() => items || [], [items]);
 

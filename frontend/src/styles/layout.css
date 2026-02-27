@@ -581,30 +581,52 @@ input:focus, select:focus{
 }
 
 }
-.gf-badge{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  padding:2px 10px;
-  border-radius:999px;
-  font-size:12px;
-  line-height:18px;
-  border:1px solid rgba(0,0,0,.12);
+
+.gf-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+  color: white;
 }
 
-.gf-badge-default{ background:#f3f4f6; color:#111827; }
-.gf-badge-green{ background:#ecfdf5; color:#065f46; border-color:#a7f3d0; }
-.gf-badge-red{ background:#fef2f2; color:#991b1b; border-color:#fecaca; }
-.gf-badge-yellow{ background:#fffbeb; color:#92400e; border-color:#fde68a; }
+/* Estados */
 
-.gf-badge-pulse{
-  animation: gfPulse 1.4s ease-in-out infinite;
+.gf-badge-green {
+  background-color: #10b981; /* Disponible */
 }
 
-@keyframes gfPulse{
-  0%{ transform: scale(1); box-shadow: 0 0 0 0 rgba(220,38,38,.35); }
-  70%{ transform: scale(1.03); box-shadow: 0 0 0 10px rgba(220,38,38,0); }
-  100%{ transform: scale(1); box-shadow: 0 0 0 0 rgba(220,38,38,0); }
+.gf-badge-orange {
+  background-color: #f97316; /* Prestado */
+}
+
+.gf-badge-blue {
+  background-color: #3b82f6; /* Vendido */
+}
+
+.gf-badge-yellow {
+  background-color: #f59e0b; /* Limpieza */
+}
+
+.gf-badge-red {
+  background-color: #ef4444; /* Vencido */
+}
+
+.gf-badge-default {
+  background-color: #6b7280;
+}
+
+/* Animación para alertas */
+.gf-badge-pulse {
+  animation: gf-pulse 1.5s infinite;
+}
+
+@keyframes gf-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+  70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
 
 .dashboard-grid{
