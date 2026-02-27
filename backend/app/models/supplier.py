@@ -11,4 +11,5 @@ class Supplier(Base):
     notes = Column(Text, nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=False), nullable=False, server_default=func.now())
+    address: Mapped[str | None] = mapped_column(Text, nullable=True)
 
