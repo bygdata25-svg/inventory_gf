@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatCurrency } from "../utils/currency";
 
 export default function Dashboard({ api, apiBase }) {
   const [data, setData] = useState(null);
@@ -21,13 +22,11 @@ export default function Dashboard({ api, apiBase }) {
       <Card title="Ventas del mes" value={data.sales_month} />
       <Card
         title="Facturación del mes"
-        value={`$ ${data.revenue_month.toLocaleString()}`}
+      value={formatCurrency(data.revenue_month)}
       />
       <Card
         title="Promedio por venta"
-        value={`$ ${data.avg_sale_month.toLocaleString(undefined, {
-          maximumFractionDigits: 2
-        })}`}
+        value={formatCurrency(data.avg_sale_month)}
       />
     </div>
   );
