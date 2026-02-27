@@ -21,6 +21,7 @@ from app.api.dresses import router as dresses_router
 from app.api.dress_loans import router as dress_loans_router
 from app.api.alerts import router as alerts_router
 from app.api.dress_sales import router as dress_sales_router
+from app.api.dashboard import router as dashboard_router
 
 
 
@@ -55,3 +56,4 @@ app.include_router(dresses_router)
 app.include_router(dress_loans_router)
 app.include_router(alerts_router)
 app.include_router(dress_sales_router)
+app.include_router(dashboard_router)
