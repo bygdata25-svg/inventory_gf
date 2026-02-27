@@ -8,7 +8,7 @@ from app.core.authz import get_current_user
 from app.models.user import User
 from app.models.dress import Dress, DressStatus
 from app.models.dress_sale import DressSale
-from app.schema.dress_sale import DressSaleCreate, DressSaleOut
+from app.schemas.dress_sale import DressSaleCreate, DressSaleOut
 
 router = APIRouter(prefix="/api/dress-sales", tags=["Dress Sales"])
 
