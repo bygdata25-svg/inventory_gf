@@ -606,3 +606,27 @@ input:focus, select:focus{
   70%{ transform: scale(1.03); box-shadow: 0 0 0 10px rgba(220,38,38,0); }
   100%{ transform: scale(1); box-shadow: 0 0 0 0 rgba(220,38,38,0); }
 }
+
+.dashboard-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+  gap:20px;
+}
+
+.dashboard-card{
+  background:white;
+  border-radius:14px;
+  padding:20px;
+  box-shadow:0 8px 24px rgba(0,0,0,.08);
+}
+
+.dashboard-title{
+  font-size:14px;
+  opacity:.7;
+}
+
+.dashboard-value{
+  font-size:28px;
+  font-weight:700;
+  margin-top:8px;
+}

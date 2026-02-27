@@ -23,6 +23,7 @@ import Suppliers from "./pages/Suppliers";
 import Dresses from "./pages/Dresses";
 import DressLoans from "./pages/DressLoans";
 import Badge from "./components/Badge";
+import Dashboard from "./pages/Dashboard";
 
 // const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://inventory-gf.onrender.com";
@@ -109,6 +110,7 @@ export default function App() {
     { key: "suppliers", label: t("nav.suppliers"), icon: <IconSupplier /> },
     { key: "rolls", label: t("nav.rolls"), icon: <IconRoll /> },
     { key: "movements", label: t("nav.movements"), icon: <IconMove /> },
+    { key: "dashboard", label: "Dashboard", icon: <IconReport /> },
 
     // ✅ NUEVO: módulo Vestidos / Préstamos
     { key: "dresses", label: "Vestidos", icon: <IconFabric /> },
@@ -154,6 +156,7 @@ export default function App() {
     // ✅ NUEVO
     dresses: "Vestidos",
     dress_loans: "Préstamos",
+    dashboard: "Dashboard",
 
     reports_stock: t("reports.menu.stock.title") || t("nav.reports"),
     reports_valuation: t("reports.menu.values.title") || t("nav.reports"),
@@ -178,6 +181,7 @@ export default function App() {
       {page === "movements" && <Movements api={api} apiBase={API_BASE} role={role} />}
       {page === "users" && role === "ADMIN" && <Users api={api} apiBase={API_BASE} role={role} />}
       {page === "suppliers" && <Suppliers api={api} apiBase={API_BASE} role={role} />}
+      {page === "dashboard" && <Dashboard api={api} apiBase={API_BASE} />}
 
       {/* ✅ NUEVO: páginas del módulo Vestidos */}
       {page === "dresses" && <Dresses api={api} apiBase={API_BASE} role={role} />}
