@@ -549,4 +549,133 @@ tr:hover td{
   }
 }
 
+/* ---------- DRESS DETAIL ---------- */
+.dress-detail-top{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 
+.dress-detail-actions{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dress-detail-hero{
+  display:grid;
+  grid-template-columns: 360px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.dress-photo{
+  width:100%;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow:hidden;
+  background: rgba(255,255,255,.7);
+  box-shadow: var(--shadow-soft);
+}
+
+.dress-photo img{
+  width:100%;
+  height:100%;
+  object-fit: cover;
+  display:block;
+}
+
+.dress-photo-placeholder{
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.dress-title-row{
+  display:flex;
+  justify-content: space-between;
+  align-items:flex-start;
+  gap: 12px;
+}
+
+.dress-title{
+  min-width: 0;
+}
+
+.dress-name{
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: .2px;
+}
+
+.dress-code{
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.dress-kpis{
+  margin-top: 12px;
+}
+
+.dress-kpi{
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,.75);
+}
+
+.dress-kpi-label{
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.dress-kpi-value{
+  font-size: 16px;
+  font-weight: 800;
+  margin-top: 6px;
+}
+
+.dress-meta{
+  margin-top: 12px;
+  display:grid;
+  gap: 10px;
+}
+
+.dress-meta-row{
+  display:grid;
+  grid-template-columns: 120px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.dress-meta-label{
+  font-size: 12px;
+  color: var(--muted);
+  padding-top: 2px;
+}
+
+.dress-meta-value{
+  font-size: 14px;
+}
+
+.dress-notes{
+  white-space: pre-wrap;
+}
+
+@media (max-width: 900px){
+  .dress-detail-hero{
+    grid-template-columns: 1fr;
+  }
+  .dress-meta-row{
+    grid-template-columns: 1fr;
+  }
+}

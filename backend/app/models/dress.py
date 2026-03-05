@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import String, Integer, DateTime, Text, Enum as SAEnum
+from sqlalchemy import String, Integer, DateTime, Text, Enum as SAEnum, Numeric, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -33,3 +33,7 @@ class Dress(Base):
 
     loans: Mapped[list["DressLoan"]] = relationship(back_populates="dress")
     photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    price: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
+
+    capsule_id: Mapped[int | None] = mapped_column(ForeignKey("capsules.id"), nullable=True, index=True)
+    capsule: Mapped["Capsule" | None] = relationship(back_populates="dresses")

@@ -6,6 +6,7 @@ from app.db.session import get_db
 from app.models.user import User
 from app.models.dress import Dress, DressStatus
 from app.schemas.dress import DressCreate, DressOut
+from app.models.capsule import Capsule
 
 from app.core.authz import get_current_user# <-- AJUSTAR según tu proyecto
 
@@ -39,10 +40,46 @@ def list_dresses(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    stmt = select(Dress)
+
+stmt = select(Dress, Capsule.name).outerjoin(Capsule, Dress.capsule_id == Capsule.id)
+
     if status:
         stmt = stmt.where(Dress.status == status)
+    if capsule_id:
+        stmt = stmt.where(Dress.capsule_id == capsule_id)
     if q:
         like = f"%{q}%"
         stmt = stmt.where((Dress.code.ilike(like)) | (Dress.name.ilike(like)))
-    return list(db.scalars(stmt.order_by(Dress.id.desc())).all())
+
+    rows = db.execute(stmt.order_by(Dress.id.desc())).all()
+
+    # convertir a DressOut + capsule_name
+    out: list[DressOut] = []
+    for dress, cap_name in rows:
+        d = DressOut.model_validate(dress)
+        d.capsule_name = cap_name
+        out.append(d)
+
+    return out
+
+@router.get("/{dress_id}", response_model=DressOut)
+def get_dress(
+    dress_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    row = db.execute(
+        select(Dress, Capsule.name)
+        .outerjoin(Capsule, Dress.capsule_id == Capsule.id)
+        .where(Dress.id == dress_id)
+    ).first()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Dress not found")
+
+    dress, cap_name = row
+
+    result = DressOut.model_validate(dress)
+    result.capsule_name = cap_name
+
+    return result

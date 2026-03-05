@@ -11,6 +11,8 @@ class DressCreate(BaseModel):
     color: Optional[str] = None
     notes: Optional[str] = None
     photo_url: Optional[str] = None
+    price: Optional[float] = None
+    capsule_id: Optional[int] = None
 
 
 class DressOut(BaseModel):
@@ -23,6 +25,9 @@ class DressOut(BaseModel):
     notes: Optional[str]
     created_at: datetime
     photo_url: Optional[str]
+    price: Optional[float]
+    capsule_id: Optional[int]
+    capsule_name: Optional[str] = None  # lo seteamos desde el modelo/consulta
 
     class Config:
         from_attributes = True

@@ -3,6 +3,13 @@ import { useEffect, useMemo, useState } from "react";
 import Badge from "../components/Badge";
 import { dressStatusLabel } from "../utils/status";
 import { t } from "../i18n";
+import DressDetail from "./DressDetail";
+
+function resolvePhoto(photoUrl) {
+  if (!photoUrl) return null;
+  if (photoUrl.startsWith("http://") || photoUrl.startsWith("https://")) return photoUrl;
+  return `/${photoUrl.replace(/^\/+/, "")}`; // rutas relativas servidas por el FE (public/)
+}
 
 export default function Dresses({ api, apiBase, role }) {
   const canEdit = role === "ADMIN" || role === "OPERATOR";
@@ -10,6 +17,9 @@ export default function Dresses({ api, apiBase, role }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // ✅ Detalle: si se selecciona un vestido, mostramos la ficha
+  const [selectedDressId, setSelectedDressId] = useState(null);
 
   // Alta vestido
   const [form, setForm] = useState({
@@ -43,7 +53,22 @@ export default function Dresses({ api, apiBase, role }) {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ✅ Si estamos en detalle, renderizamos el componente de ficha
+  if (selectedDressId) {
+    return (
+      <DressDetail
+        api={api}
+        apiBase={apiBase}
+        role={role}
+        dressId={selectedDressId}
+        onBack={() => setSelectedDressId(null)}
+        onRefresh={load}
+      />
+    );
+  }
 
   async function createDress(e) {
     e.preventDefault();
@@ -60,6 +85,7 @@ export default function Dresses({ api, apiBase, role }) {
           color: form.color || null,
           notes: form.notes || null,
           photo_url: form.photo_url || null
+          // más adelante: price, capsule_id
         })
       });
 
@@ -110,27 +136,27 @@ export default function Dresses({ api, apiBase, role }) {
     }
   }
 
-function DressStatusBadge({ status }) {
-  if (status === "AVAILABLE")
-    return <Badge variant="green">{dressStatusLabel(status)}</Badge>;
+  function DressStatusBadge({ status }) {
+    if (status === "AVAILABLE")
+      return <Badge variant="green">{dressStatusLabel(status)}</Badge>;
 
-  if (status === "LOANED")
-    return <Badge variant="orange">{dressStatusLabel(status)}</Badge>;
+    if (status === "LOANED")
+      return <Badge variant="orange">{dressStatusLabel(status)}</Badge>;
 
-  if (status === "SOLD")
-    return <Badge variant="blue">{dressStatusLabel(status)}</Badge>;
+    if (status === "SOLD")
+      return <Badge variant="blue">{dressStatusLabel(status)}</Badge>;
 
-  if (status === "CLEANING")
-    return <Badge variant="yellow">{dressStatusLabel(status)}</Badge>;
+    if (status === "CLEANING")
+      return <Badge variant="yellow">{dressStatusLabel(status)}</Badge>;
 
-  if (status === "MAINTENANCE")
-    return <Badge variant="default">{dressStatusLabel(status)}</Badge>;
+    if (status === "MAINTENANCE")
+      return <Badge variant="default">{dressStatusLabel(status)}</Badge>;
 
-  if (status === "RETIRED")
-    return <Badge variant="default">{dressStatusLabel(status)}</Badge>;
+    if (status === "RETIRED")
+      return <Badge variant="default">{dressStatusLabel(status)}</Badge>;
 
-  return <Badge variant="default">{status}</Badge>;
-}
+    return <Badge variant="default">{status}</Badge>;
+  }
 
   const tableRows = useMemo(() => items || [], [items]);
 
@@ -166,7 +192,7 @@ function DressStatusBadge({ status }) {
               onChange={(e) => setForm({ ...form, color: e.target.value })}
             />
             <input
-              placeholder="Foto (URL)"
+              placeholder="Foto (URL o ruta relativa)"
               value={form.photo_url}
               onChange={(e) => setForm({ ...form, photo_url: e.target.value })}
               style={{ minWidth: 260 }}
@@ -198,11 +224,16 @@ function DressStatusBadge({ status }) {
         </thead>
         <tbody>
           {tableRows.map((d) => (
-            <tr key={d.id}>
+            <tr
+              key={d.id}
+              className="dress-row"
+              onClick={() => setSelectedDressId(d.id)}
+              style={{ cursor: "pointer" }}
+            >
               <td>
                 {d.photo_url ? (
                   <img
-                    src={d.photo_url}
+                    src={resolvePhoto(d.photo_url)}
                     alt={d.name}
                     style={{
                       width: 44,
@@ -220,13 +251,18 @@ function DressStatusBadge({ status }) {
                 )}
               </td>
               <td>{d.code}</td>
-              <td>{d.name}</td>
+              <td style={{ fontWeight: 800 }}>{d.name}</td>
               <td>{d.size}</td>
               <td>{d.color}</td>
               <td>
                 <DressStatusBadge status={d.status} />
               </td>
-              <td style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+
+              {/* Evitar que los botones disparen el click de la fila */}
+              <td
+                style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
+                onClick={(e) => e.stopPropagation()}
+              >
                 {canEdit && d.status === "AVAILABLE" && (
                   <>
                     <button
@@ -391,48 +427,4 @@ function DressStatusBadge({ status }) {
           </div>
         </div>
       )}
-
-      {/* ======= estilos mínimos de modal (podés mover a tu css global) ======= */}
-      <style>{`
-        .modal-overlay{
-          position: fixed;
-          inset: 0;
-          background: rgba(0,0,0,.35);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 18px;
-          z-index: 999;
-        }
-        .modal{
-          width: min(860px, 100%);
-          background: #fff;
-          border-radius: 14px;
-          border: 1px solid rgba(0,0,0,.12);
-          box-shadow: 0 12px 40px rgba(0,0,0,.18);
-          padding: 14px;
-        }
-        .modal-head{
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap: 10px;
-          margin-bottom: 12px;
-        }
-        .modal-grid{
-          display:grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 10px;
-        }
-        .modal-actions{
-          display:flex;
-          gap: 10px;
-          margin-top: 12px;
-        }
-        @media (max-width: 720px){
-          .modal-grid{ grid-template-columns: 1fr; }
-        }
-      `}</style>
-    </div>
-  );
 }
