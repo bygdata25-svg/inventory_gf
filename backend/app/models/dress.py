@@ -33,7 +33,12 @@ class Dress(Base):
 
     loans: Mapped[list["DressLoan"]] = relationship(back_populates="dress")
     photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    price: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
+        # ✅ NUEVOS
+    price: Mapped[Optional[float]] = mapped_column(Numeric(12, 2), nullable=True)
 
-    capsule_id: Mapped[int | None] = mapped_column(ForeignKey("capsules.id"), nullable=True, index=True)
-    capsule: Mapped["Capsule" | None] = relationship(back_populates="dresses")
+    capsule_id: Mapped[Optional[int]] = mapped_column(ForeignKey("capsules.id"), nullable=True, index=True)
+
+    # ✅ IMPORTANTE: relationship con string evita problemas de import/circular
+    capsule: Mapped[Optional["Capsule"]] = relationship("Capsule", back_populates="dresses")
+
+    loans: Mapped[list["DressLoan"]] = relationship(back_populates="dress")
