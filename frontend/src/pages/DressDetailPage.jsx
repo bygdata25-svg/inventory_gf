@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { dressStatusLabel } from "../utils/status";
 
 function resolvePhoto(photoUrl) {
   if (!photoUrl) return null;
@@ -167,7 +168,9 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
                 <h2 style={{ margin: 0 }}>{dress.name}</h2>
                 <div style={{ opacity: 0.7, marginTop: 4 }}>{dress.code}</div>
               </div>
-              <span className={badgeClass(dress.status)}>{dress.status}</span>
+               <span className={badgeClass(dress.status)}>
+                     {dressStatusLabel(dress.status)}
+               </span>
             </div>
 
             <div
