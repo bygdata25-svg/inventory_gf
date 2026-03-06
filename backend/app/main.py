@@ -2,6 +2,7 @@ from app.models import fabric  # noqa: F401
 from app.models import roll    # noqa: F401
 from app.models import dress, dress_loan  # noqa: F401
 from app.models import dress_sale  # noqa: F401
+from app.models import capsule  # noqa: F401
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes.fabrics import router as fabrics_router
@@ -10,6 +11,7 @@ from app.api.routes.stock_movements import router as stock_movements_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.reports import router as reports_router
 from app.api.routes.suppliers import router as suppliers_router
+from app.api.routes.capsules import router as capsules_router
 from app.db.session import engine, Base
 # 👇 IMPORTANTE: importar todos los modelos
 from app.models import fabric
@@ -59,3 +61,4 @@ app.include_router(alerts_router)
 app.include_router(dress_sales_router)
 app.include_router(dashboard_router)
 app.include_router(dashboard_alerts_router)
+app.include_router(capsules_router)
