@@ -5,10 +5,9 @@ from sqlalchemy import select
 from app.db.session import get_db
 from app.models.user import User
 from app.models.dress import Dress, DressStatus
-from app.schemas.dress import DressCreate, DressOut
 from app.models.capsule import Capsule
-
-from app.core.authz import get_current_user# <-- AJUSTAR según tu proyecto
+from app.schemas.dress import DressCreate, DressOut
+from app.core.authz import get_current_user
 
 router = APIRouter(prefix="/api/dresses", tags=["Dresses"])
 
@@ -30,18 +29,21 @@ def create_dress(
     db.add(dress)
     db.commit()
     db.refresh(dress)
-    return dress
+
+    result = DressOut.model_validate(dress)
+    result.capsule_name = dress.capsule.name if dress.capsule else None
+    return result
 
 
 @router.get("", response_model=list[DressOut])
 def list_dresses(
     status: DressStatus | None = Query(default=None),
+    capsule_id: int | None = Query(default=None),
     q: str | None = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-
-stmt = select(Dress, Capsule.name).outerjoin(Capsule, Dress.capsule_id == Capsule.id)
+    stmt = select(Dress, Capsule.name).outerjoin(Capsule, Dress.capsule_id == Capsule.id)
 
     if status:
         stmt = stmt.where(Dress.status == status)
@@ -53,14 +55,14 @@ stmt = select(Dress, Capsule.name).outerjoin(Capsule, Dress.capsule_id == Capsul
 
     rows = db.execute(stmt.order_by(Dress.id.desc())).all()
 
-    # convertir a DressOut + capsule_name
-    out: list[DressOut] = []
-    for dress, cap_name in rows:
-        d = DressOut.model_validate(dress)
-        d.capsule_name = cap_name
-        out.append(d)
+    out = []
+    for dress, capsule_name in rows:
+        item = DressOut.model_validate(dress)
+        item.capsule_name = capsule_name
+        out.append(item)
 
     return out
+
 
 @router.get("/{dress_id}", response_model=DressOut)
 def get_dress(
@@ -77,9 +79,8 @@ def get_dress(
     if not row:
         raise HTTPException(status_code=404, detail="Dress not found")
 
-    dress, cap_name = row
+    dress, capsule_name = row
 
     result = DressOut.model_validate(dress)
-    result.capsule_name = cap_name
-
+    result.capsule_name = capsule_name
     return result
