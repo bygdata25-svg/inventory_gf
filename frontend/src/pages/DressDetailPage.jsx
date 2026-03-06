@@ -169,7 +169,7 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
                 <div style={{ opacity: 0.7, marginTop: 4 }}>{dress.code}</div>
               </div>
                <span className={badgeClass(dress.status)}>
-                     {dressStatusLabel(dress.status)}
+                     Disponible
                </span>
             </div>
 
