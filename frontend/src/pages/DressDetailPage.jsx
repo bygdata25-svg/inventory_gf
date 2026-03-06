@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 
 function resolvePhoto(photoUrl) {
   if (!photoUrl) return null;
@@ -30,13 +29,14 @@ function formatPrice(value) {
   if (value === null || value === undefined || value === "") return "-";
   const n = Number(value);
   if (Number.isNaN(n)) return String(value);
-  return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n);
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    maximumFractionDigits: 0
+  }).format(n);
 }
 
-export default function DressDetailPage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-
+export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefresh }) {
   const [dress, setDress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -48,17 +48,10 @@ export default function DressDetailPage() {
       setLoading(true);
       setErr("");
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/dresses/${id}`, {
-          credentials: "include",
-        });
-        if (!res.ok) {
-          const t = await res.text().catch(() => "");
-          throw new Error(t || `HTTP ${res.status}`);
-        }
-        const data = await res.json();
+        const data = await api.request(`${apiBase}/api/dresses/${dressId}`);
         if (!cancelled) setDress(data);
       } catch (e) {
-        if (!cancelled) setErr(e?.message || "Error");
+        if (!cancelled) setErr(e?.detail || e?.message || "Error");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -67,11 +60,10 @@ export default function DressDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [api, apiBase, dressId]);
 
   const imgSrc = useMemo(() => resolvePhoto(dress?.photo_url), [dress?.photo_url]);
 
-  // Acción principal (por ahora placeholders)
   const primaryActionLabel = useMemo(() => {
     if (!dress) return "";
     switch (dress.status) {
@@ -105,7 +97,7 @@ export default function DressDetailPage() {
           <b>Error:</b> {err}
         </div>
         <div>
-          <button className="btn" onClick={() => navigate(-1)}>← Volver</button>
+          <button className="btn" onClick={onBack}>← Volver</button>
         </div>
       </div>
     );
@@ -116,7 +108,7 @@ export default function DressDetailPage() {
       <div className="content">
         <div className="card">Vestido no encontrado.</div>
         <div>
-          <button className="btn" onClick={() => navigate(-1)}>← Volver</button>
+          <button className="btn" onClick={onBack}>← Volver</button>
         </div>
       </div>
     );
@@ -124,28 +116,26 @@ export default function DressDetailPage() {
 
   return (
     <div className="content">
-      {/* TOP BAR */}
       <div className="dress-detail-top">
-        <button className="btn" onClick={() => navigate(-1)}>← Volver</button>
+        <button className="btn" onClick={onBack}>← Volver</button>
 
         <div className="dress-detail-actions">
+          <button className="btn" onClick={onRefresh}>Refrescar lista</button>
+
           {showPrimaryAction && (
             <button
               className="btn btn-primary"
               onClick={() => {
-                // TODO: conectar con tu flujo real
-                // navigate(`/loans/new?dress_id=${dress.id}`)
                 alert(`Acción: ${primaryActionLabel} (pendiente de conectar)`);
               }}
             >
               {primaryActionLabel}
             </button>
           )}
+
           <button
             className="btn"
             onClick={() => {
-              // TODO: conectar edición real
-              // navigate(`/dresses/${dress.id}/edit`)
               alert("Editar (pendiente de conectar)");
             }}
           >
@@ -154,7 +144,6 @@ export default function DressDetailPage() {
         </div>
       </div>
 
-      {/* HEADER CARD */}
       <div className="card dress-detail-hero">
         <div className="dress-detail-hero-left">
           <div className="dress-photo">
@@ -177,7 +166,6 @@ export default function DressDetailPage() {
             <span className={badgeClass(dress.status)}>{dress.status}</span>
           </div>
 
-          {/* KPI cards */}
           <div className="grid grid-2 dress-kpis">
             <div className="dress-kpi">
               <div className="dress-kpi-label">Precio</div>
@@ -197,7 +185,6 @@ export default function DressDetailPage() {
             </div>
           </div>
 
-          {/* Details */}
           <div className="dress-meta">
             <div className="dress-meta-row">
               <div className="dress-meta-label">Creado</div>
@@ -214,7 +201,6 @@ export default function DressDetailPage() {
         </div>
       </div>
 
-      {/* NEXT: Historial / préstamos / ventas */}
       <div className="card">
         <h3>Historial</h3>
         <div className="page-sub" style={{ marginBottom: 10 }}>
@@ -222,8 +208,12 @@ export default function DressDetailPage() {
         </div>
 
         <div className="grid grid-2">
-          <button className="btn" onClick={() => alert("Ver préstamos (pendiente)")}>Ver préstamos</button>
-          <button className="btn" onClick={() => alert("Ver ventas (pendiente)")}>Ver ventas</button>
+          <button className="btn" onClick={() => alert("Ver préstamos (pendiente)")}>
+            Ver préstamos
+          </button>
+          <button className="btn" onClick={() => alert("Ver ventas (pendiente)")}>
+            Ver ventas
+          </button>
         </div>
       </div>
     </div>
