@@ -382,8 +382,6 @@ export default function Dresses({ api, apiBase, role }) {
           </div>
         </div>
       )}
-
-      {/* =============== MODAL VENTA =============== */}
       {saleForm && (
         <div className="modal-overlay" onClick={() => setSaleForm(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -427,4 +425,50 @@ export default function Dresses({ api, apiBase, role }) {
           </div>
         </div>
       )}
+
+      <style>{`
+        .dress-row:hover td{
+          background: rgba(17,17,17,.02);
+        }
+        .modal-overlay{
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,.35);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 18px;
+          z-index: 999;
+        }
+        .modal{
+          width: min(860px, 100%);
+          background: #fff;
+          border-radius: 14px;
+          border: 1px solid rgba(0,0,0,.12);
+          box-shadow: 0 12px 40px rgba(0,0,0,.18);
+          padding: 14px;
+        }
+        .modal-head{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap: 10px;
+          margin-bottom: 12px;
+        }
+        .modal-grid{
+          display:grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+        .modal-actions{
+          display:flex;
+          gap: 10px;
+          margin-top: 12px;
+        }
+        @media (max-width: 720px){
+          .modal-grid{ grid-template-columns: 1fr; }
+        }
+      `}</style>
+    </div>
+  );
 }
