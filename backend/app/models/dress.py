@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import Optional
 from datetime import datetime
 from enum import Enum
 
@@ -26,19 +25,21 @@ class Dress(Base):
     name: Mapped[str] = mapped_column(String(120))
     size: Mapped[str | None] = mapped_column(String(20), nullable=True)
     color: Mapped[str | None] = mapped_column(String(40), nullable=True)
-    status: Mapped[DressStatus] = mapped_column(SAEnum(DressStatus), default=DressStatus.AVAILABLE, index=True)
+    status: Mapped[DressStatus] = mapped_column(
+        SAEnum(DressStatus),
+        default=DressStatus.AVAILABLE,
+        index=True
+    )
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
 
-    loans: Mapped[list["DressLoan"]] = relationship(back_populates="dress")
     photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-        # ✅ NUEVOS
-    price: Mapped[Optional[float]] = mapped_column(Numeric(12, 2), nullable=True)
 
-    capsule_id: Mapped[Optional[int]] = mapped_column(ForeignKey("capsules.id"), nullable=True, index=True)
+    # nuevos campos
+    price: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
+    capsule_id: Mapped[int | None] = mapped_column(ForeignKey("capsules.id"), nullable=True, index=True)
 
-    # ✅ IMPORTANTE: relationship con string evita problemas de import/circular
-    capsule: Mapped[Optional["Capsule"]] = relationship("Capsule", back_populates="dresses")
-
+    # relaciones
+    capsule: Mapped["Capsule"] = relationship("Capsule", back_populates="dresses")
     loans: Mapped[list["DressLoan"]] = relationship(back_populates="dress")
