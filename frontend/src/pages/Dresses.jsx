@@ -1,5 +1,5 @@
 // frontend/src/pages/Dresses.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Badge from "../components/Badge";
 import { dressStatusLabel } from "../utils/status";
 import { t } from "../i18n";
@@ -68,19 +68,6 @@ export default function Dresses({ api, apiBase, role }) {
     loadCapsules();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  if (selectedDressId) {
-    return (
-      <DressDetail
-        api={api}
-        apiBase={apiBase}
-        role={role}
-        dressId={selectedDressId}
-        onBack={() => setSelectedDressId(null)}
-        onRefresh={load}
-      />
-    );
-  }
 
   async function createDress(e) {
     e.preventDefault();
@@ -187,7 +174,20 @@ export default function Dresses({ api, apiBase, role }) {
     return <Badge variant="default">{status}</Badge>;
   }
 
-  const tableRows = useMemo(() => items || [], [items]);
+  const tableRows = items || [];
+
+  if (selectedDressId) {
+    return (
+      <DressDetail
+        api={api}
+        apiBase={apiBase}
+        role={role}
+        dressId={selectedDressId}
+        onBack={() => setSelectedDressId(null)}
+        onRefresh={load}
+      />
+    );
+  }
 
   return (
     <div>
