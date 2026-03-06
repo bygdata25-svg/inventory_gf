@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Badge from "../components/Badge";
 import { dressStatusLabel } from "../utils/status";
 import { t } from "../i18n";
-import DressDetail from "./DressDetail";
+import DressDetail from "./DressDetailPage";
 
 function resolvePhoto(photoUrl) {
   if (!photoUrl) return null;
