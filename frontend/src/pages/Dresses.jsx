@@ -8,33 +8,32 @@ import DressDetail from "./DressDetailPage";
 function resolvePhoto(photoUrl) {
   if (!photoUrl) return null;
   if (photoUrl.startsWith("http://") || photoUrl.startsWith("https://")) return photoUrl;
-  return `/${photoUrl.replace(/^\/+/, "")}`; // rutas relativas servidas por el FE (public/)
+  return `/${photoUrl.replace(/^\/+/, "")}`;
 }
 
 export default function Dresses({ api, apiBase, role }) {
   const canEdit = role === "ADMIN" || role === "OPERATOR";
 
   const [items, setItems] = useState([]);
+  const [capsules, setCapsules] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingCapsules, setLoadingCapsules] = useState(false);
   const [error, setError] = useState("");
 
-  // ✅ Detalle: si se selecciona un vestido, mostramos la ficha
   const [selectedDressId, setSelectedDressId] = useState(null);
 
-  // Alta vestido
   const [form, setForm] = useState({
     code: "",
     name: "",
     size: "",
     color: "",
     notes: "",
-    photo_url: ""
+    photo_url: "",
+    price: "",
+    capsule_id: ""
   });
 
-  // Modal préstamo
   const [loanForm, setLoanForm] = useState(null);
-
-  // Modal venta
   const [saleForm, setSaleForm] = useState(null);
 
   async function load() {
@@ -51,12 +50,25 @@ export default function Dresses({ api, apiBase, role }) {
     }
   }
 
+  async function loadCapsules() {
+    setLoadingCapsules(true);
+    try {
+      const data = await api.request(`${apiBase}/api/capsules`);
+      setCapsules(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error("Error loading capsules", e);
+      setCapsules([]);
+    } finally {
+      setLoadingCapsules(false);
+    }
+  }
+
   useEffect(() => {
     load();
+    loadCapsules();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ Si estamos en detalle, renderizamos el componente de ficha
   if (selectedDressId) {
     return (
       <DressDetail
@@ -79,17 +91,28 @@ export default function Dresses({ api, apiBase, role }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          code: form.code,
-          name: form.name,
+          code: form.code.trim(),
+          name: form.name.trim(),
           size: form.size || null,
           color: form.color || null,
           notes: form.notes || null,
-          photo_url: form.photo_url || null
-          // más adelante: price, capsule_id
+          photo_url: form.photo_url || null,
+          price: form.price === "" ? null : Number(form.price),
+          capsule_id: form.capsule_id === "" ? null : Number(form.capsule_id)
         })
       });
 
-      setForm({ code: "", name: "", size: "", color: "", notes: "", photo_url: "" });
+      setForm({
+        code: "",
+        name: "",
+        size: "",
+        color: "",
+        notes: "",
+        photo_url: "",
+        price: "",
+        capsule_id: ""
+      });
+
       load();
     } catch (e) {
       alert(e?.detail || "Error creando vestido");
@@ -137,23 +160,29 @@ export default function Dresses({ api, apiBase, role }) {
   }
 
   function DressStatusBadge({ status }) {
-    if (status === "AVAILABLE")
+    if (status === "AVAILABLE") {
       return <Badge variant="green">{dressStatusLabel(status)}</Badge>;
+    }
 
-    if (status === "LOANED")
+    if (status === "LOANED") {
       return <Badge variant="orange">{dressStatusLabel(status)}</Badge>;
+    }
 
-    if (status === "SOLD")
+    if (status === "SOLD") {
       return <Badge variant="blue">{dressStatusLabel(status)}</Badge>;
+    }
 
-    if (status === "CLEANING")
+    if (status === "CLEANING") {
       return <Badge variant="yellow">{dressStatusLabel(status)}</Badge>;
+    }
 
-    if (status === "MAINTENANCE")
+    if (status === "MAINTENANCE") {
       return <Badge variant="default">{dressStatusLabel(status)}</Badge>;
+    }
 
-    if (status === "RETIRED")
+    if (status === "RETIRED") {
       return <Badge variant="default">{dressStatusLabel(status)}</Badge>;
+    }
 
     return <Badge variant="default">{status}</Badge>;
   }
@@ -175,36 +204,68 @@ export default function Dresses({ api, apiBase, role }) {
               onChange={(e) => setForm({ ...form, code: e.target.value })}
               required
             />
+
             <input
               placeholder="Nombre"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
             />
+
             <input
               placeholder="Talle"
               value={form.size}
               onChange={(e) => setForm({ ...form, size: e.target.value })}
             />
+
             <input
               placeholder="Color"
               value={form.color}
               onChange={(e) => setForm({ ...form, color: e.target.value })}
             />
+
+            <select
+              value={form.capsule_id}
+              onChange={(e) => setForm({ ...form, capsule_id: e.target.value })}
+              style={{ minWidth: 180 }}
+            >
+              <option value="">Sin cápsula</option>
+              {capsules.map((capsule) => (
+                <option key={capsule.id} value={capsule.id}>
+                  {capsule.name}
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Precio"
+              value={form.price}
+              onChange={(e) => setForm({ ...form, price: e.target.value })}
+            />
+
             <input
               placeholder="Foto (URL o ruta relativa)"
               value={form.photo_url}
               onChange={(e) => setForm({ ...form, photo_url: e.target.value })}
               style={{ minWidth: 260 }}
             />
+
             <input
               placeholder="Notas"
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               style={{ minWidth: 240 }}
             />
+
             <button type="submit">{t("actions.create") || "Crear"}</button>
           </div>
+
+          {loadingCapsules && (
+            <div style={{ marginTop: 8, opacity: 0.7 }}>Cargando cápsulas...</div>
+          )}
         </form>
       )}
 
@@ -218,6 +279,8 @@ export default function Dresses({ api, apiBase, role }) {
             <th>Nombre</th>
             <th>Talle</th>
             <th>Color</th>
+            <th>Cápsula</th>
+            <th>Precio</th>
             <th>Estado</th>
             <th></th>
           </tr>
@@ -250,15 +313,17 @@ export default function Dresses({ api, apiBase, role }) {
                   <span style={{ opacity: 0.6 }}>—</span>
                 )}
               </td>
+
               <td>{d.code}</td>
               <td style={{ fontWeight: 800 }}>{d.name}</td>
-              <td>{d.size}</td>
-              <td>{d.color}</td>
+              <td>{d.size || "—"}</td>
+              <td>{d.color || "—"}</td>
+              <td>{d.capsule_name || "—"}</td>
+              <td>{d.price != null ? `$ ${Number(d.price).toFixed(2)}` : "—"}</td>
               <td>
                 <DressStatusBadge status={d.status} />
               </td>
 
-              {/* Evitar que los botones disparen el click de la fila */}
               <td
                 style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
                 onClick={(e) => e.stopPropagation()}
@@ -305,7 +370,7 @@ export default function Dresses({ api, apiBase, role }) {
 
           {!loading && tableRows.length === 0 && (
             <tr>
-              <td colSpan={7} style={{ opacity: 0.7 }}>
+              <td colSpan={9} style={{ opacity: 0.7 }}>
                 Sin resultados
               </td>
             </tr>
@@ -313,7 +378,6 @@ export default function Dresses({ api, apiBase, role }) {
         </tbody>
       </table>
 
-      {/* =============== MODAL PRÉSTAMO =============== */}
       {loanForm && (
         <div className="modal-overlay" onClick={() => setLoanForm(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -382,6 +446,7 @@ export default function Dresses({ api, apiBase, role }) {
           </div>
         </div>
       )}
+
       {saleForm && (
         <div className="modal-overlay" onClick={() => setSaleForm(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
