@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 function resolvePhoto(photoUrl) {
   if (!photoUrl) return null;
   if (photoUrl.startsWith("http://") || photoUrl.startsWith("https://")) return photoUrl;
-  return `/${photoUrl.replace(/^\/+/, "")}`; // rutas en frontend/public
+  return `/${photoUrl.replace(/^\/+/, "")}`;
 }
 
 function badgeClass(status) {
@@ -38,66 +38,58 @@ function formatPrice(value) {
 
 export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefresh }) {
   const [dress, setDress] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      setLoading(true);
-      setErr("");
-      try {
-        const data = await api.request(`${apiBase}/api/dresses/${dressId}`);
-        if (!cancelled) setDress(data);
-      } catch (e) {
-        if (!cancelled) setErr(e?.detail || e?.message || "Error");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [api, apiBase, dressId]);
-
-  const imgSrc = useMemo(() => resolvePhoto(dress?.photo_url), [dress?.photo_url]);
-
-  const primaryActionLabel = useMemo(() => {
-    if (!dress) return "";
-    switch (dress.status) {
-      case "AVAILABLE":
-        return "Crear préstamo";
-      case "LOANED":
-        return "Registrar devolución";
-      case "CLEANING":
-        return "Marcar disponible";
-      case "MAINTENANCE":
-        return "Finalizar mantenimiento";
-      default:
-        return "";
+  async function loadDetail() {
+    setLoading(true);
+    setErr("");
+    try {
+      const data = await api.request(`${apiBase}/api/dresses/${dressId}`);
+      setDress(data || null);
+    } catch (e) {
+      console.error("Error loading dress detail", e);
+      setErr(e?.detail || e?.message || "No se pudo cargar el detalle del vestido");
+      setDress(null);
+    } finally {
+      setLoading(false);
     }
-  }, [dress]);
+  }
 
-  const showPrimaryAction = Boolean(primaryActionLabel);
+  useEffect(() => {
+    if (dressId) {
+      loadDetail();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dressId]);
 
   if (loading) {
     return (
-      <div className="content">
-        <div className="card">Cargando vestido...</div>
+      <div>
+        <div style={{ marginBottom: 12 }}>
+          <button className="btn" type="button" onClick={onBack}>
+            ← Volver
+          </button>
+        </div>
+        <div className="card">Cargando vestido #{dressId}...</div>
       </div>
     );
   }
 
   if (err) {
     return (
-      <div className="content">
+      <div>
+        <div style={{ marginBottom: 12, display: "flex", gap: 8 }}>
+          <button className="btn" type="button" onClick={onBack}>
+            ← Volver
+          </button>
+          <button className="btn" type="button" onClick={loadDetail}>
+            Reintentar
+          </button>
+        </div>
+
         <div className="card alert alert-error">
           <b>Error:</b> {err}
-        </div>
-        <div>
-          <button className="btn" onClick={onBack}>← Volver</button>
         </div>
       </div>
     );
@@ -105,117 +97,158 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
 
   if (!dress) {
     return (
-      <div className="content">
-        <div className="card">Vestido no encontrado.</div>
-        <div>
-          <button className="btn" onClick={onBack}>← Volver</button>
+      <div>
+        <div style={{ marginBottom: 12 }}>
+          <button className="btn" type="button" onClick={onBack}>
+            ← Volver
+          </button>
         </div>
+        <div className="card">No se encontró el vestido #{dressId}.</div>
       </div>
     );
   }
 
+  const imgSrc = resolvePhoto(dress.photo_url);
+
   return (
-    <div className="content">
-      <div className="dress-detail-top">
-        <button className="btn" onClick={onBack}>← Volver</button>
+    <div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+          marginBottom: 16,
+          flexWrap: "wrap"
+        }}
+      >
+        <button className="btn" type="button" onClick={onBack}>
+          ← Volver
+        </button>
 
-        <div className="dress-detail-actions">
-          <button className="btn" onClick={onRefresh}>Refrescar lista</button>
-
-          {showPrimaryAction && (
-            <button
-              className="btn btn-primary"
-              onClick={() => {
-                alert(`Acción: ${primaryActionLabel} (pendiente de conectar)`);
-              }}
-            >
-              {primaryActionLabel}
-            </button>
-          )}
-
-          <button
-            className="btn"
-            onClick={() => {
-              alert("Editar (pendiente de conectar)");
-            }}
-          >
-            Editar
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className="btn" type="button" onClick={onRefresh}>
+            Refrescar lista
+          </button>
+          <button className="btn" type="button" onClick={loadDetail}>
+            Actualizar detalle
           </button>
         </div>
       </div>
 
-      <div className="card dress-detail-hero">
-        <div className="dress-detail-hero-left">
-          <div className="dress-photo">
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "320px 1fr",
+            gap: 20,
+            alignItems: "start"
+          }}
+        >
+          <div>
             {imgSrc ? (
-              <img src={imgSrc} alt={dress.name} />
+              <img
+                src={imgSrc}
+                alt={dress.name}
+                style={{
+                  width: "100%",
+                  maxWidth: 320,
+                  borderRadius: 14,
+                  border: "1px solid rgba(0,0,0,.12)",
+                  objectFit: "cover"
+                }}
+              />
             ) : (
-              <div className="dress-photo-placeholder">
+              <div
+                style={{
+                  width: "100%",
+                  maxWidth: 320,
+                  height: 320,
+                  borderRadius: 14,
+                  border: "1px solid rgba(0,0,0,.12)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  opacity: 0.6
+                }}
+              >
                 Sin foto
               </div>
             )}
           </div>
-        </div>
 
-        <div className="dress-detail-hero-right">
-          <div className="dress-title-row">
-            <div className="dress-title">
-              <div className="dress-name">{dress.name}</div>
-              <div className="dress-code">{dress.code}</div>
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "start", flexWrap: "wrap" }}>
+              <div>
+                <h2 style={{ margin: "0 0 6px 0" }}>{dress.name}</h2>
+                <div style={{ opacity: 0.75 }}>Código: {dress.code}</div>
+              </div>
+              <span className={badgeClass(dress.status)}>{dress.status}</span>
             </div>
-            <span className={badgeClass(dress.status)}>{dress.status}</span>
-          </div>
 
-          <div className="grid grid-2 dress-kpis">
-            <div className="dress-kpi">
-              <div className="dress-kpi-label">Precio</div>
-              <div className="dress-kpi-value">{formatPrice(dress.price)}</div>
-            </div>
-            <div className="dress-kpi">
-              <div className="dress-kpi-label">Cápsula</div>
-              <div className="dress-kpi-value">{dress.capsule_name || "-"}</div>
-            </div>
-            <div className="dress-kpi">
-              <div className="dress-kpi-label">Talle</div>
-              <div className="dress-kpi-value">{dress.size || "-"}</div>
-            </div>
-            <div className="dress-kpi">
-              <div className="dress-kpi-label">Color</div>
-              <div className="dress-kpi-value">{dress.color || "-"}</div>
-            </div>
-          </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                gap: 12,
+                marginTop: 18
+              }}
+            >
+              <div>
+                <div style={{ opacity: 0.7 }}>Cápsula</div>
+                <div style={{ fontWeight: 700 }}>{dress.capsule_name || "-"}</div>
+              </div>
 
-          <div className="dress-meta">
-            <div className="dress-meta-row">
-              <div className="dress-meta-label">Creado</div>
-              <div className="dress-meta-value">
-                {dress.created_at ? new Date(dress.created_at).toLocaleString("es-AR") : "-"}
+              <div>
+                <div style={{ opacity: 0.7 }}>Precio</div>
+                <div style={{ fontWeight: 700 }}>{formatPrice(dress.price)}</div>
+              </div>
+
+              <div>
+                <div style={{ opacity: 0.7 }}>Talle</div>
+                <div style={{ fontWeight: 700 }}>{dress.size || "-"}</div>
+              </div>
+
+              <div>
+                <div style={{ opacity: 0.7 }}>Color</div>
+                <div style={{ fontWeight: 700 }}>{dress.color || "-"}</div>
+              </div>
+
+              <div>
+                <div style={{ opacity: 0.7 }}>Creado</div>
+                <div style={{ fontWeight: 700 }}>
+                  {dress.created_at ? new Date(dress.created_at).toLocaleString("es-AR") : "-"}
+                </div>
+              </div>
+
+              <div>
+                <div style={{ opacity: 0.7 }}>ID</div>
+                <div style={{ fontWeight: 700 }}>{dress.id}</div>
               </div>
             </div>
 
-            <div className="dress-meta-row">
-              <div className="dress-meta-label">Notas</div>
-              <div className="dress-meta-value dress-notes">{dress.notes || "-"}</div>
+            <div style={{ marginTop: 18 }}>
+              <div style={{ opacity: 0.7, marginBottom: 4 }}>Notas</div>
+              <div>{dress.notes || "-"}</div>
             </div>
           </div>
         </div>
       </div>
 
       <div className="card">
-        <h3>Historial</h3>
-        <div className="page-sub" style={{ marginBottom: 10 }}>
+        <h3 style={{ marginTop: 0 }}>Historial</h3>
+        <div style={{ opacity: 0.75 }}>
           Próximo paso: mostrar préstamos y ventas del vestido.
         </div>
-
-        <div className="grid grid-2">
-          <button className="btn" onClick={() => alert("Ver préstamos (pendiente)")}>
-            Ver préstamos
-          </button>
-          <button className="btn" onClick={() => alert("Ver ventas (pendiente)")}>
-            Ver ventas
-          </button>
-        </div>
       </div>
+
+      <style>{`
+        @media (max-width: 720px){
+          .card > div[style*="grid-template-columns: 320px 1fr"]{
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
