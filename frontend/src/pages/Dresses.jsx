@@ -78,12 +78,21 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
       params.set("page_size", String(pageSize));
 
       const data = await api.request(`${apiBase}/api/dresses?${params.toString()}`);
+      console.log("dresses response", data);
 
-      setItems(Array.isArray(data?.items) ? data.items : []);
-      setTotal(Number(data?.total || 0));
-      setPage(Number(data?.page || pageToLoad));
-      setPages(Number(data?.pages || 1));
+      if (Array.isArray(data)) {
+        setItems(data);
+        setTotal(data.length);
+        setPage(1);
+        setPages(1);
+      } else {
+        setItems(Array.isArray(data?.items) ? data.items : []);
+        setTotal(Number(data?.total || 0));
+        setPage(Number(data?.page || pageToLoad));
+        setPages(Number(data?.pages || 1));
+      }
     } catch (e) {
+      console.error("Error loading dresses", e);
       setError(e?.detail || t("ui.error"));
       setItems([]);
       setTotal(0);
@@ -108,10 +117,16 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
   }
 
   useEffect(() => {
-    load(1, filters);
     loadCapsules();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (showList) {
+      load(1, filters);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showList]);
 
   async function createDress(e) {
     e.preventDefault();
@@ -146,7 +161,9 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
         capsule_id: ""
       });
 
-      load(page, filters);
+      if (showList) {
+        load(page, filters);
+      }
     } catch (e) {
       alert(e?.detail || "Error creando vestido");
     }
