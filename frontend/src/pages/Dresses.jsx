@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Badge from "../components/Badge";
 import { dressStatusLabel } from "../utils/status";
 import { t } from "../i18n";
@@ -8,6 +8,27 @@ function resolvePhoto(photoUrl) {
   if (!photoUrl) return null;
   if (photoUrl.startsWith("http://") || photoUrl.startsWith("https://")) return photoUrl;
   return `/${photoUrl.replace(/^\/+/, "")}`;
+}
+
+function buildDressQuery({ filters, page, pageSize }) {
+  const params = new URLSearchParams();
+
+  const capsuleId = String(filters.capsule_id || "").trim();
+  const color = String(filters.color || "").trim();
+  const location = String(filters.location || "").trim();
+  const priceMin = String(filters.price_min ?? "").trim();
+  const priceMax = String(filters.price_max ?? "").trim();
+
+  if (capsuleId) params.set("capsule_id", capsuleId);
+  if (color) params.set("color", color);
+  if (location) params.set("location", location);
+  if (priceMin !== "") params.set("price_min", priceMin);
+  if (priceMax !== "") params.set("price_max", priceMax);
+
+  params.set("page", String(page));
+  params.set("page_size", String(pageSize));
+
+  return params.toString();
 }
 
 export default function Dresses({ api, apiBase, role, mode = "list" }) {
@@ -28,7 +49,17 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
 
-  const [filters, setFilters] = useState({
+  // filtros editables en pantalla
+  const [filterForm, setFilterForm] = useState({
+    capsule_id: "",
+    color: "",
+    location: "",
+    price_min: "",
+    price_max: ""
+  });
+
+  // filtros realmente aplicados al request
+  const [appliedFilters, setAppliedFilters] = useState({
     capsule_id: "",
     color: "",
     location: "",
@@ -51,39 +82,22 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
   const [loanForm, setLoanForm] = useState(null);
   const [saleForm, setSaleForm] = useState(null);
 
-  async function load(pageToLoad = 1, activeFilters = filters) {
+  async function load({ pageToLoad = 1, filtersToUse = appliedFilters } = {}) {
     setLoading(true);
     setError("");
 
     try {
-      const params = new URLSearchParams();
+      const query = buildDressQuery({
+        filters: filtersToUse,
+        page: pageToLoad,
+        pageSize
+      });
 
-      if (activeFilters.capsule_id) {
-        params.set("capsule_id", activeFilters.capsule_id);
-      }
-      const color = (activeFilters.color || "").trim();
-      const location = (activeFilters.location || "").trim();
-
-      if (color) {
-        params.set("color", color);
-      }
-      if (location) {
-        params.set("location", location);
-      }
-      if (activeFilters.price_min !== "") {
-        params.set("price_min", activeFilters.price_min);
-      }
-      if (activeFilters.price_max !== "") {
-        params.set("price_max", activeFilters.price_max);
-      }
-
-      params.set("page", String(pageToLoad));
-      params.set("page_size", String(pageSize));
-
-      const data = await api.request(`${apiBase}/api/dresses?${params.toString()}`);
-      console.log("dresses response", data);
+      const url = `${apiBase}/api/dresses?${query}`;
+      const data = await api.request(url);
 
       if (Array.isArray(data)) {
+        // compatibilidad si el backend devuelve lista plana
         setItems(data);
         setTotal(data.length);
         setPage(1);
@@ -126,7 +140,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
 
   useEffect(() => {
     if (showList) {
-      load(1, filters);
+      load({ pageToLoad: 1, filtersToUse: appliedFilters });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showList]);
@@ -165,7 +179,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
       });
 
       if (showList) {
-        load(page, filters);
+        load({ pageToLoad: page, filtersToUse: appliedFilters });
       }
     } catch (e) {
       alert(e?.detail || "Error creando vestido");
@@ -183,7 +197,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
         body: JSON.stringify(loanForm)
       });
       setLoanForm(null);
-      load(page, filters);
+      load({ pageToLoad: page, filtersToUse: appliedFilters });
     } catch (e) {
       alert(e?.detail || "Error creando préstamo");
     }
@@ -206,7 +220,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
       });
 
       setSaleForm(null);
-      load(page, filters);
+      load({ pageToLoad: page, filtersToUse: appliedFilters });
     } catch (e) {
       alert(e?.detail || "Error registrando venta");
     }
@@ -218,61 +232,57 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
   }
 
   function applyFilters(e) {
-  e.preventDefault();
+    e.preventDefault();
 
-  const normalizedFilters = {
-    capsule_id: filters.capsule_id,
-    color: (filters.color || "").trim(),
-    location: (filters.location || "").trim(),
-    price_min: filters.price_min,
-    price_max: filters.price_max
-  };
+    const normalized = {
+      capsule_id: String(filterForm.capsule_id || "").trim(),
+      color: String(filterForm.color || "").trim(),
+      location: String(filterForm.location || "").trim(),
+      price_min: String(filterForm.price_min ?? "").trim(),
+      price_max: String(filterForm.price_max ?? "").trim()
+    };
 
-  setFilters(normalizedFilters);
-  load(1, normalizedFilters);
-}
+    setAppliedFilters(normalized);
+    load({ pageToLoad: 1, filtersToUse: normalized });
+  }
 
   function clearFilters() {
-    const emptyFilters = {
+    const empty = {
       capsule_id: "",
       color: "",
       location: "",
       price_min: "",
       price_max: ""
     };
-    setFilters(emptyFilters);
-    load(1, emptyFilters);
+
+    setFilterForm(empty);
+    setAppliedFilters(empty);
+    load({ pageToLoad: 1, filtersToUse: empty });
   }
 
   function DressStatusBadge({ status }) {
     if (status === "AVAILABLE") {
       return <Badge variant="green">{dressStatusLabel(status)}</Badge>;
     }
-
     if (status === "LOANED") {
       return <Badge variant="orange">{dressStatusLabel(status)}</Badge>;
     }
-
     if (status === "SOLD") {
       return <Badge variant="blue">{dressStatusLabel(status)}</Badge>;
     }
-
     if (status === "CLEANING") {
       return <Badge variant="yellow">{dressStatusLabel(status)}</Badge>;
     }
-
     if (status === "MAINTENANCE") {
       return <Badge variant="default">{dressStatusLabel(status)}</Badge>;
     }
-
     if (status === "RETIRED") {
       return <Badge variant="default">{dressStatusLabel(status)}</Badge>;
     }
-
     return <Badge variant="default">{status}</Badge>;
   }
 
-  const tableRows = items || [];
+  const tableRows = useMemo(() => items || [], [items]);
 
   if (selectedDressId) {
     return (
@@ -282,7 +292,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
         role={role}
         dressId={selectedDressId}
         onBack={() => setSelectedDressId(null)}
-        onRefresh={() => load(page, filters)}
+        onRefresh={() => load({ pageToLoad: page, filtersToUse: appliedFilters })}
       />
     );
   }
@@ -378,8 +388,8 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
           <form onSubmit={applyFilters}>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <select
-                value={filters.capsule_id}
-                onChange={(e) => setFilters({ ...filters, capsule_id: e.target.value })}
+                value={filterForm.capsule_id}
+                onChange={(e) => setFilterForm({ ...filterForm, capsule_id: e.target.value })}
                 style={{ minWidth: 180 }}
               >
                 <option value="">Todas las cápsulas</option>
@@ -392,14 +402,14 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
 
               <input
                 placeholder="Filtrar por color"
-                value={filters.color}
-                onChange={(e) => setFilters({ ...filters, color: e.target.value })}
+                value={filterForm.color}
+                onChange={(e) => setFilterForm({ ...filterForm, color: e.target.value })}
               />
 
               <input
                 placeholder="Filtrar por ubicación"
-                value={filters.location}
-                onChange={(e) => setFilters({ ...filters, location: e.target.value })}
+                value={filterForm.location}
+                onChange={(e) => setFilterForm({ ...filterForm, location: e.target.value })}
               />
 
               <input
@@ -407,8 +417,8 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
                 min="0"
                 step="0.01"
                 placeholder="Precio mínimo"
-                value={filters.price_min}
-                onChange={(e) => setFilters({ ...filters, price_min: e.target.value })}
+                value={filterForm.price_min}
+                onChange={(e) => setFilterForm({ ...filterForm, price_min: e.target.value })}
               />
 
               <input
@@ -416,8 +426,8 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
                 min="0"
                 step="0.01"
                 placeholder="Precio máximo"
-                value={filters.price_max}
-                onChange={(e) => setFilters({ ...filters, price_max: e.target.value })}
+                value={filterForm.price_max}
+                onChange={(e) => setFilterForm({ ...filterForm, price_max: e.target.value })}
               />
 
               <button type="submit">{t("actions.search") || "Buscar"}</button>
@@ -571,7 +581,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
               <button
                 type="button"
                 disabled={page <= 1 || loading}
-                onClick={() => load(page - 1, filters)}
+                onClick={() => load({ pageToLoad: page - 1, filtersToUse: appliedFilters })}
               >
                 Anterior
               </button>
@@ -579,7 +589,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
               <button
                 type="button"
                 disabled={page >= pages || loading}
-                onClick={() => load(page + 1, filters)}
+                onClick={() => load({ pageToLoad: page + 1, filtersToUse: appliedFilters })}
               >
                 Siguiente
               </button>
