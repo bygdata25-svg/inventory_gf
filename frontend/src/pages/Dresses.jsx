@@ -31,6 +31,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
   const [page, setPage] = useState(1);
 
   const [filterForm, setFilterForm] = useState({
+    status: "",
     capsule_id: "",
     color: "",
     location: "",
@@ -39,6 +40,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
   });
 
   const [appliedFilters, setAppliedFilters] = useState({
+    status: "",
     capsule_id: "",
     color: "",
     location: "",
@@ -218,6 +220,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
     e.preventDefault();
 
     setAppliedFilters({
+      status: String(filterForm.status || "").trim(),
       capsule_id: String(filterForm.capsule_id || "").trim(),
       color: String(filterForm.color || "").trim(),
       location: String(filterForm.location || "").trim(),
@@ -230,6 +233,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
 
   function clearFilters() {
     const empty = {
+      status: "",
       capsule_id: "",
       color: "",
       location: "",
@@ -253,6 +257,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
   }
 
   const filteredItems = useMemo(() => {
+    const status = String(appliedFilters.status || "").trim();
     const capsuleId = normalizeText(appliedFilters.capsule_id);
     const color = normalizeText(appliedFilters.color);
     const location = normalizeText(appliedFilters.location);
@@ -260,11 +265,13 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
     const priceMax = appliedFilters.price_max !== "" ? Number(appliedFilters.price_max) : null;
 
     return (allItems || []).filter((item) => {
+      const itemStatus = String(item.status || "").trim();
       const itemCapsuleId = String(item.capsule_id ?? "").trim();
       const itemColor = normalizeText(item.color);
       const itemLocation = normalizeText(item.location);
       const itemPrice = item.price != null ? Number(item.price) : null;
 
+      if (status && itemStatus !== status) return false;
       if (capsuleId && itemCapsuleId !== capsuleId) return false;
       if (color && !itemColor.includes(color)) return false;
       if (location && !itemLocation.includes(location)) return false;
@@ -386,18 +393,31 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
           <form onSubmit={applyFilters}>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <select
-                value={filterForm.capsule_id}
-                onChange={(e) => setFilterForm({ ...filterForm, capsule_id: e.target.value })}
-                style={{ minWidth: 180 }}
-              >
-                <option value="">Todas las cápsulas</option>
-                {capsules.map((capsule) => (
-                  <option key={capsule.id} value={capsule.id}>
-                    {capsule.name}
-                  </option>
-                ))}
-              </select>
+                    value={filterForm.status}
+                    onChange={(e) => setFilterForm({ ...filterForm, status: e.target.value })}
+                    style={{ minWidth: 180 }}
+                  >
+                    <option value="">{t("ui.all") || "Todos los estados"}</option> 
+                    <option value="AVAILABLE">{dressStatusLabel("AVAILABLE")}</option>
+                    <option value="LOANED">{dressStatusLabel("LOANED")}</option>
+                    <option value="CLEANING">{dressStatusLabel("CLEANING")}</option>
+                    <option value="MAINTENANCE">{dressStatusLabel("MAINTENANCE")}</option>
+                    <option value="RETIRED">{dressStatusLabel("RETIRED")}</option>
+                    <option value="SOLD">{dressStatusLabel("SOLD")}</option>
+                  </select>
 
+                  <select
+                    value={filterForm.capsule_id}
+                    onChange={(e) => setFilterForm({ ...filterForm, capsule_id: e.target.value })}
+                    style={{ minWidth: 180 }}
+                  >
+                    <option value="">Todas las cápsulas</option>
+                    {capsules.map((capsule) => (
+                      <option key={capsule.id} value={capsule.id}>
+                        {capsule.name}
+                      </option>
+                    ))}
+              </select>
               <input
                 placeholder="Filtrar por color"
                 value={filterForm.color}
