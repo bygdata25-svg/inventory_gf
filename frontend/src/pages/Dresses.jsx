@@ -1,4 +1,3 @@
-// frontend/src/pages/Dresses.jsx
 import { useEffect, useState } from "react";
 import Badge from "../components/Badge";
 import { dressStatusLabel } from "../utils/status";
@@ -11,9 +10,11 @@ function resolvePhoto(photoUrl) {
   return `/${photoUrl.replace(/^\/+/, "")}`;
 }
 
-export default function Dresses({ api, apiBase, role }) {
+export default function Dresses({ api, apiBase, role, mode = "list" }) {
   const canEdit = role === "ADMIN" || role === "OPERATOR";
   const pageSize = 15;
+  const showCreate = mode === "create";
+  const showList = mode === "list";
 
   const [items, setItems] = useState([]);
   const [capsules, setCapsules] = useState([]);
@@ -258,11 +259,11 @@ export default function Dresses({ api, apiBase, role }) {
 
   return (
     <div>
-      <h2>Vestidos</h2>
+      <h2>{showCreate ? "Crear vestido" : "Listado y filtros"}</h2>
 
       {error && <div className="alert alert-error">{String(error)}</div>}
 
-      {canEdit && (
+      {canEdit && showCreate && (
         <form onSubmit={createDress} style={{ marginBottom: 18 }}>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <input
@@ -342,214 +343,220 @@ export default function Dresses({ api, apiBase, role }) {
         </form>
       )}
 
-      <div className="card" style={{ marginBottom: 18 }}>
-        <form onSubmit={applyFilters}>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <select
-              value={filters.capsule_id}
-              onChange={(e) => setFilters({ ...filters, capsule_id: e.target.value })}
-              style={{ minWidth: 180 }}
-            >
-              <option value="">Todas las cápsulas</option>
-              {capsules.map((capsule) => (
-                <option key={capsule.id} value={capsule.id}>
-                  {capsule.name}
-                </option>
-              ))}
-            </select>
-
-            <input
-              placeholder="Filtrar por color"
-              value={filters.color}
-              onChange={(e) => setFilters({ ...filters, color: e.target.value })}
-            />
-
-            <input
-              placeholder="Filtrar por ubicación"
-              value={filters.location}
-              onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-            />
-
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="Precio mínimo"
-              value={filters.price_min}
-              onChange={(e) => setFilters({ ...filters, price_min: e.target.value })}
-            />
-
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="Precio máximo"
-              value={filters.price_max}
-              onChange={(e) => setFilters({ ...filters, price_max: e.target.value })}
-            />
-
-            <button type="submit">{t("actions.search") || "Buscar"}</button>
-            <button type="button" onClick={clearFilters}>
-              {t("actions.clear") || "Limpiar"}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {loading && <div>Cargando...</div>}
-
-      <div style={{ marginBottom: 10, opacity: 0.8 }}>
-        Total: {total} vestido(s)
-      </div>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Foto</th>
-            <th>Código</th>
-            <th>Nombre</th>
-            <th>Talle</th>
-            <th>Color</th>
-            <th>Ubicación</th>
-            <th>Cápsula</th>
-            <th>Precio</th>
-            <th>Estado</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {tableRows.map((d) => (
-            <tr
-              key={d.id}
-              className="dress-row"
-              onClick={() => setSelectedDressId(d.id)}
-              style={{ cursor: "pointer" }}
-            >
-              <td>
-                {d.photo_url ? (
-                  <img
-                    src={resolvePhoto(d.photo_url)}
-                    alt={d.name}
-                    style={{
-                      width: 44,
-                      height: 44,
-                      objectFit: "cover",
-                      borderRadius: 10,
-                      border: "1px solid rgba(0,0,0,.10)"
-                    }}
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
-                  />
-                ) : (
-                  <span style={{ opacity: 0.6 }}>—</span>
-                )}
-              </td>
-
-              <td>{d.code}</td>
-              <td style={{ fontWeight: 800 }}>{d.name}</td>
-              <td>{d.size || "—"}</td>
-              <td>{d.color || "—"}</td>
-              <td>{d.location || "—"}</td>
-              <td>{d.capsule_name || "—"}</td>
-              <td>{d.price != null ? `U$S ${Number(d.price).toFixed(2)}` : "—"}</td>
-              <td>
-                <DressStatusBadge status={d.status} />
-              </td>
-
-              <td
-                style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
-                onClick={(e) => e.stopPropagation()}
+      {showList && (
+        <div className="card" style={{ marginBottom: 18 }}>
+          <form onSubmit={applyFilters}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <select
+                value={filters.capsule_id}
+                onChange={(e) => setFilters({ ...filters, capsule_id: e.target.value })}
+                style={{ minWidth: 180 }}
               >
-                {canEdit && d.status === "AVAILABLE" && (
-                  <>
-                    <button
-                      onClick={() =>
-                        setLoanForm({
-                          dress_id: d.id,
-                          customer_name: "",
-                          customer_dni: "",
-                          customer_phone: "",
-                          customer_email: "",
-                          event_name: "",
-                          loan_days: 3,
-                          picked_up_by: "",
-                          notes: ""
-                        })
-                      }
-                      type="button"
-                    >
-                      Prestar
-                    </button>
+                <option value="">Todas las cápsulas</option>
+                {capsules.map((capsule) => (
+                  <option key={capsule.id} value={capsule.id}>
+                    {capsule.name}
+                  </option>
+                ))}
+              </select>
 
-                    <button
-                      onClick={() =>
-                        setSaleForm({
-                          dress_id: d.id,
-                          sold_price: "",
-                          buyer_name: "",
-                          notes: ""
-                        })
-                      }
-                      type="button"
-                    >
-                      Vender
-                    </button>
+              <input
+                placeholder="Filtrar por color"
+                value={filters.color}
+                onChange={(e) => setFilters({ ...filters, color: e.target.value })}
+              />
 
-                    <button
-                      onClick={() => sendToWorkshop(d.id)}
-                      type="button"
-                    >
-                      Taller
-                    </button>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
+              <input
+                placeholder="Filtrar por ubicación"
+                value={filters.location}
+                onChange={(e) => setFilters({ ...filters, location: e.target.value })}
+              />
 
-          {!loading && tableRows.length === 0 && (
-            <tr>
-              <td colSpan={10} style={{ opacity: 0.7 }}>
-                Sin resultados
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Precio mínimo"
+                value={filters.price_min}
+                onChange={(e) => setFilters({ ...filters, price_min: e.target.value })}
+              />
 
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-          marginTop: 14,
-          flexWrap: "wrap"
-        }}
-      >
-        <div style={{ opacity: 0.8 }}>
-          Página {page} de {pages}
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Precio máximo"
+                value={filters.price_max}
+                onChange={(e) => setFilters({ ...filters, price_max: e.target.value })}
+              />
+
+              <button type="submit">{t("actions.search") || "Buscar"}</button>
+              <button type="button" onClick={clearFilters}>
+                {t("actions.clear") || "Limpiar"}
+              </button>
+            </div>
+          </form>
         </div>
+      )}
 
-        <div style={{ display: "flex", gap: 8 }}>
-          <button
-            type="button"
-            disabled={page <= 1 || loading}
-            onClick={() => load(page - 1, filters)}
-          >
-            Anterior
-          </button>
+      {showList && (
+        <>
+          {loading && <div>Cargando...</div>}
 
-          <button
-            type="button"
-            disabled={page >= pages || loading}
-            onClick={() => load(page + 1, filters)}
+          <div style={{ marginBottom: 10, opacity: 0.8 }}>
+            Total: {total} vestido(s)
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Foto</th>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Talle</th>
+                <th>Color</th>
+                <th>Ubicación</th>
+                <th>Cápsula</th>
+                <th>Precio</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {tableRows.map((d) => (
+                <tr
+                  key={d.id}
+                  className="dress-row"
+                  onClick={() => setSelectedDressId(d.id)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <td>
+                    {d.photo_url ? (
+                      <img
+                        src={resolvePhoto(d.photo_url)}
+                        alt={d.name}
+                        style={{
+                          width: 44,
+                          height: 44,
+                          objectFit: "cover",
+                          borderRadius: 10,
+                          border: "1px solid rgba(0,0,0,.10)"
+                        }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <span style={{ opacity: 0.6 }}>—</span>
+                    )}
+                  </td>
+
+                  <td>{d.code}</td>
+                  <td style={{ fontWeight: 800 }}>{d.name}</td>
+                  <td>{d.size || "—"}</td>
+                  <td>{d.color || "—"}</td>
+                  <td>{d.location || "—"}</td>
+                  <td>{d.capsule_name || "—"}</td>
+                  <td>{d.price != null ? `U$S ${Number(d.price).toFixed(2)}` : "—"}</td>
+                  <td>
+                    <DressStatusBadge status={d.status} />
+                  </td>
+
+                  <td
+                    style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {canEdit && d.status === "AVAILABLE" && (
+                      <>
+                        <button
+                          onClick={() =>
+                            setLoanForm({
+                              dress_id: d.id,
+                              customer_name: "",
+                              customer_dni: "",
+                              customer_phone: "",
+                              customer_email: "",
+                              event_name: "",
+                              loan_days: 3,
+                              picked_up_by: "",
+                              notes: ""
+                            })
+                          }
+                          type="button"
+                        >
+                          Prestar
+                        </button>
+
+                        <button
+                          onClick={() =>
+                            setSaleForm({
+                              dress_id: d.id,
+                              sold_price: "",
+                              buyer_name: "",
+                              notes: ""
+                            })
+                          }
+                          type="button"
+                        >
+                          Vender
+                        </button>
+
+                        <button
+                          onClick={() => sendToWorkshop(d.id)}
+                          type="button"
+                        >
+                          Taller
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+
+              {!loading && tableRows.length === 0 && (
+                <tr>
+                  <td colSpan={10} style={{ opacity: 0.7 }}>
+                    Sin resultados
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              marginTop: 14,
+              flexWrap: "wrap"
+            }}
           >
-            Siguiente
-          </button>
-        </div>
-      </div>
+            <div style={{ opacity: 0.8 }}>
+              Página {page} de {pages}
+            </div>
+
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                type="button"
+                disabled={page <= 1 || loading}
+                onClick={() => load(page - 1, filters)}
+              >
+                Anterior
+              </button>
+
+              <button
+                type="button"
+                disabled={page >= pages || loading}
+                onClick={() => load(page + 1, filters)}
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {loanForm && (
         <div className="modal-overlay" onClick={() => setLoanForm(null)}>

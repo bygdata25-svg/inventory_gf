@@ -1,5 +1,4 @@
-// frontend/src/components/Layout.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Layout({
   brandTitle,
@@ -16,13 +15,11 @@ export default function Layout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Cerrar sidebar al navegar (mobile)
   function go(pageKey) {
     onNavigate(pageKey);
     setSidebarOpen(false);
   }
 
-  // Cerrar con ESC
   useEffect(() => {
     function onKey(e) {
       if (e.key === "Escape") setSidebarOpen(false);
@@ -31,20 +28,13 @@ export default function Layout({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Detectar si el currentPage pertenece a reportes
-  const reportChildren = useMemo(() => {
-    const reportsItem = navItems.find((x) => x.key === "reports");
-    return reportsItem?.children || [];
-  }, [navItems]);
-
-  const isReportsSection = useMemo(() => {
-    if (currentPage === "reports") return true;
-    return reportChildren.some((c) => c.key === currentPage);
-  }, [currentPage, reportChildren]);
+  function isGroupActive(item) {
+    if (currentPage === item.key) return true;
+    return Array.isArray(item.children) && item.children.some((c) => c.key === currentPage);
+  }
 
   return (
     <div className={`app-shell ${sidebarOpen ? "sidebar-open" : ""}`}>
-      {/* overlay (solo mobile) */}
       <div className="overlay" onClick={() => setSidebarOpen(false)} />
 
       <aside className="sidebar">
@@ -60,9 +50,8 @@ export default function Layout({
 
         <nav className="nav">
           {navItems.map((it) => {
-            // Reportes: render padre + hijos
-            if (it.key === "reports" && Array.isArray(it.children) && it.children.length > 0) {
-              const parentActive = isReportsSection;
+            if (Array.isArray(it.children) && it.children.length > 0) {
+              const parentActive = isGroupActive(it);
 
               return (
                 <div key={it.key} className="nav-group">
@@ -75,7 +64,6 @@ export default function Layout({
                     <span className="nav-label">{it.label}</span>
                   </button>
 
-                  {/* Opción 1: mostrar hijos cuando estás en Reportes */}
                   {parentActive && (
                     <div className="nav-sub">
                       {it.children.map((ch) => {
@@ -98,7 +86,6 @@ export default function Layout({
               );
             }
 
-            // Default item
             return (
               <button
                 key={it.key}
@@ -117,7 +104,6 @@ export default function Layout({
       <main className="main">
         <header className="header">
           <div className="header-left">
-            {/* botón hamburguesa (solo mobile) */}
             <button
               className="btn btn-icon hamburger"
               type="button"
@@ -150,4 +136,3 @@ export default function Layout({
     </div>
   );
 }
-

@@ -115,7 +115,15 @@ export default function App() {
     { key: "capsules", label: "Cápsulas", icon: <IconFabric /> },
 
     // ✅ NUEVO: módulo Vestidos / Préstamos
-    { key: "dresses", label: "Vestidos", icon: <IconFabric /> },
+    {
+      key: "dresses",
+      label: "Vestidos",
+      icon: <IconFabric />,
+      children: [
+    { key: "dresses_create", label: "Crear vestido" },
+    { key: "dresses_list", label: "Listado y filtros" }
+      ]
+    },
     {
     key: "dress_loans",
     label: (
@@ -157,6 +165,8 @@ export default function App() {
 
     // ✅ NUEVO
     dresses: "Vestidos",
+    dresses_create: "Crear vestido",
+    dresses_list: "Listado y filtros",
     dress_loans: "Préstamos",
     dashboard: "Dashboard",
     capsules: "Cápsulas",
@@ -188,7 +198,9 @@ export default function App() {
       {page === "capsules" && <Capsules api={api} apiBase={API_BASE} role={role} />}
 
       {/* ✅ NUEVO: páginas del módulo Vestidos */}
-      {page === "dresses" && <Dresses api={api} apiBase={API_BASE} role={role} />}
+      {page === "dresses" && <Dresses api={api} apiBase={API_BASE} role={role} mode="list" />}
+      {page === "dresses_create" && <Dresses api={api} apiBase={API_BASE} role={role} mode="create" />}
+      {page === "dresses_list" && <Dresses api={api} apiBase={API_BASE} role={role} mode="list" />}
       {page === "dress_loans" && <DressLoans api={api} apiBase={API_BASE} role={role} />}
 
       {/* ✅ Los 3 reportes usan la misma página Reports, que decide qué mostrar */}
