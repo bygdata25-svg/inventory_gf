@@ -3,6 +3,8 @@ from math import ceil
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
+from pydantic import BaseModel
+
 
 from app.db.session import get_db
 from app.models.user import User
@@ -147,4 +149,32 @@ def get_dress(
 
     result = DressOut.model_validate(dress)
     result.capsule_name = capsule_name
+    return result
+
+class DressStatusUpdate(BaseModel):
+    status: DressStatus
+
+
+@router.patch("/{dress_id}/status", response_model=DressOut)
+def update_dress_status(
+    dress_id: int,
+    payload: DressStatusUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role not in ("ADMIN", "OPERATOR"):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    dress = db.get(Dress, dress_id)
+
+    if not dress:
+        raise HTTPException(status_code=404, detail="Dress not found")
+
+    dress.status = payload.status
+
+    db.commit()
+    db.refresh(dress)
+
+    result = DressOut.model_validate(dress)
+    result.capsule_name = dress.capsule.name if dress.capsule else None
     return result

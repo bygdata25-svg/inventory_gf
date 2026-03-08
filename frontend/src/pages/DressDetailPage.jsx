@@ -161,6 +161,25 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
     );
   }
 
+async function returnLoan() {
+  try {
+    const openLoan = await api.request(`${apiBase}/api/dress-loans/by-dress/${dressId}/open`);
+
+    await api.request(`${apiBase}/api/dress-loans/${openLoan.id}/return`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        returned_by: "Showroom"
+      })
+    });
+
+    await loadDetail();
+    if (onRefresh) onRefresh();
+  } catch (e) {
+    alert(e?.detail || "Error registrando devolución");
+  }
+}
+
   if (!dress) {
     return (
       <div>
@@ -172,8 +191,9 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
     );
   }
 
-  const isAvailable = dress.status === "AVAILABLE";
-  const canReturnToAvailable = dress.status === "MAINTENANCE" || dress.status === "CLEANING";
+const isAvailable = dress.status === "AVAILABLE";
+const isLoaned = dress.status === "LOANED";
+const canReturnToAvailable = dress.status === "MAINTENANCE" || dress.status === "CLEANING";
 
   return (
     <div>
@@ -208,7 +228,15 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
               >
                 Prestar
               </button>
-
+              {isLoaned && (
+              <button
+                className="btn btn-primary"
+                type="button"
+                onClick={returnLoan}
+              >
+                Registrar devolución
+              </button>
+            )}
               <button
                 className="btn"
                 type="button"

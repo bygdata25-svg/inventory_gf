@@ -121,3 +121,22 @@ def list_loans(
         )
 
     return list(db.scalars(stmt.order_by(DressLoan.id.desc())).all())
+
+@router.get("/by-dress/{dress_id}/open", response_model=LoanOut)
+def get_open_loan_by_dress(
+    dress_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    loan = db.scalar(
+        select(DressLoan).where(
+            DressLoan.dress_id == dress_id,
+            DressLoan.status == LoanStatus.OPEN,
+            DressLoan.returned_at.is_(None),
+        ).order_by(DressLoan.id.desc())
+    )
+
+    if not loan:
+        raise HTTPException(status_code=404, detail="Open loan not found for this dress")
+
+    return loan
