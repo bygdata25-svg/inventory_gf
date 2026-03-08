@@ -61,11 +61,14 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
       if (activeFilters.capsule_id) {
         params.set("capsule_id", activeFilters.capsule_id);
       }
-      if (activeFilters.color.trim()) {
-        params.set("color", activeFilters.color.trim());
+      const color = (activeFilters.color || "").trim();
+      const location = (activeFilters.location || "").trim();
+
+      if (color) {
+        params.set("color", color);
       }
-      if (activeFilters.location.trim()) {
-        params.set("location", activeFilters.location.trim());
+      if (location) {
+        params.set("location", location);
       }
       if (activeFilters.price_min !== "") {
         params.set("price_min", activeFilters.price_min);
@@ -215,9 +218,19 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
   }
 
   function applyFilters(e) {
-    e.preventDefault();
-    load(1, filters);
-  }
+  e.preventDefault();
+
+  const normalizedFilters = {
+    capsule_id: filters.capsule_id,
+    color: (filters.color || "").trim(),
+    location: (filters.location || "").trim(),
+    price_min: filters.price_min,
+    price_max: filters.price_max
+  };
+
+  setFilters(normalizedFilters);
+  load(1, normalizedFilters);
+}
 
   function clearFilters() {
     const emptyFilters = {
