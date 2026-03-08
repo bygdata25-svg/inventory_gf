@@ -30,8 +30,7 @@ function formatPrice(value) {
   if (value === null || value === undefined || value === "") return "-";
   const n = Number(value);
   if (Number.isNaN(n)) return String(value);
-     return `U$S ${n.toFixed(2)}`;
-  }).format(n);
+  return `U$S ${n.toFixed(2)}`;
 }
 
 export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefresh }) {
