@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { dressStatusLabel } from "../utils/status";
 
 function resolvePhoto(photoUrl) {
@@ -38,10 +38,30 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
+  const [loanForm, setLoanForm] = useState(null);
+  const [saleForm, setSaleForm] = useState(null);
+  const [savingStatus, setSavingStatus] = useState(false);
+
+  async function loadDetail() {
+    setLoading(true);
+    setErr("");
+
+    try {
+      const data = await api.request(`${apiBase}/api/dresses/${dressId}`);
+      setDress(data);
+    } catch (e) {
+      console.error("Dress detail error", e);
+      setErr(e?.detail || e?.message || "No se pudo cargar el detalle del vestido");
+      setDress(null);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
     let cancelled = false;
 
-    async function loadDetail() {
+    (async () => {
       setLoading(true);
       setErr("");
       try {
@@ -56,16 +76,73 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
       } finally {
         if (!cancelled) setLoading(false);
       }
-    }
-
-    if (dressId) {
-      loadDetail();
-    }
+    })();
 
     return () => {
       cancelled = true;
     };
   }, [api, apiBase, dressId]);
+
+  const imgSrc = useMemo(() => resolvePhoto(dress?.photo_url), [dress?.photo_url]);
+
+  async function updateStatus(status) {
+    setSavingStatus(true);
+    try {
+      await api.request(`${apiBase}/api/dresses/${dressId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status })
+      });
+
+      await loadDetail();
+      if (onRefresh) onRefresh();
+    } catch (e) {
+      alert(e?.detail || "No se pudo actualizar el estado");
+    } finally {
+      setSavingStatus(false);
+    }
+  }
+
+  async function createLoan(e) {
+    e.preventDefault();
+
+    try {
+      await api.request(`${apiBase}/api/dress-loans`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(loanForm)
+      });
+
+      setLoanForm(null);
+      await loadDetail();
+      if (onRefresh) onRefresh();
+    } catch (e) {
+      alert(e?.detail || "Error creando préstamo");
+    }
+  }
+
+  async function createSale(e) {
+    e.preventDefault();
+
+    try {
+      await api.request(`${apiBase}/api/dress-sales`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dress_id: saleForm.dress_id,
+          sold_price: Number(saleForm.sold_price),
+          buyer_name: saleForm.buyer_name || null,
+          notes: saleForm.notes || null
+        })
+      });
+
+      setSaleForm(null);
+      await loadDetail();
+      if (onRefresh) onRefresh();
+    } catch (e) {
+      alert(e?.detail || "Error registrando venta");
+    }
+  }
 
   if (loading) {
     return <div className="card">Cargando vestido...</div>;
@@ -95,131 +172,270 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
     );
   }
 
-  const imgSrc = resolvePhoto(dress.photo_url);
+  const isAvailable = dress.status === "AVAILABLE";
+  const canReturnToAvailable = dress.status === "MAINTENANCE" || dress.status === "CLEANING";
 
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 12,
-          flexWrap: "wrap",
-          marginBottom: 16
-        }}
-      >
-        <button className="btn" type="button" onClick={onBack}>
+      <div className="dress-detail-top">
+        <button className="btn" onClick={onBack} type="button">
           ← Volver
         </button>
 
-        <button className="btn" type="button" onClick={onRefresh}>
-          Refrescar lista
-        </button>
+        <div className="dress-detail-actions">
+          <button className="btn" onClick={loadDetail} type="button">
+            Actualizar
+          </button>
+
+          {isAvailable && (
+            <>
+              <button
+                className="btn"
+                type="button"
+                onClick={() =>
+                  setLoanForm({
+                    dress_id: dress.id,
+                    customer_name: "",
+                    customer_dni: "",
+                    customer_phone: "",
+                    customer_email: "",
+                    event_name: "",
+                    loan_days: 3,
+                    picked_up_by: "",
+                    notes: ""
+                  })
+                }
+              >
+                Prestar
+              </button>
+
+              <button
+                className="btn"
+                type="button"
+                onClick={() =>
+                  setSaleForm({
+                    dress_id: dress.id,
+                    sold_price: "",
+                    buyer_name: "",
+                    notes: ""
+                  })
+                }
+              >
+                Vender
+              </button>
+
+              <button
+                className="btn btn-primary"
+                type="button"
+                disabled={savingStatus}
+                onClick={() => updateStatus("MAINTENANCE")}
+              >
+                Taller
+              </button>
+            </>
+          )}
+
+          {canReturnToAvailable && (
+            <button
+              className="btn btn-primary"
+              type="button"
+              disabled={savingStatus}
+              onClick={() => updateStatus("AVAILABLE")}
+            >
+              Volver a disponible
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="card" style={{ padding: 16 }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "320px 1fr",
-            gap: 20
-          }}
-        >
-          <div>
+      <div className="card dress-detail-hero">
+        <div className="dress-detail-hero-left">
+          <div className="dress-photo">
             {imgSrc ? (
-              <img
-                src={imgSrc}
-                alt={dress.name}
-                style={{
-                  width: "100%",
-                  maxWidth: 320,
-                  borderRadius: 12,
-                  border: "1px solid rgba(0,0,0,.12)",
-                  objectFit: "cover"
-                }}
-              />
+              <img src={imgSrc} alt={dress.name} />
             ) : (
-              <div
-                style={{
-                  width: "100%",
-                  maxWidth: 320,
-                  height: 320,
-                  borderRadius: 12,
-                  border: "1px solid rgba(0,0,0,.12)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  opacity: 0.7
-                }}
-              >
+              <div className="dress-photo-placeholder">
                 Sin foto
               </div>
             )}
           </div>
+        </div>
 
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-              <div>
-                <h2 style={{ margin: 0 }}>{dress.name}</h2>
-                <div style={{ opacity: 0.7, marginTop: 4 }}>{dress.code}</div>
-              </div>
-               <span className={badgeClass(dress.status)}>
-                     Disponible
-               </span>
+        <div className="dress-detail-hero-right">
+          <div className="dress-title-row">
+            <div className="dress-title">
+              <div className="dress-name">{dress.name}</div>
+              <div className="dress-code">{dress.code}</div>
             </div>
+            <span className={badgeClass(dress.status)}>
+              {dressStatusLabel(dress.status)}
+            </span>
+          </div>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                gap: 14,
-                marginTop: 18
-              }}
-            >
-              <div>
-                <div style={{ opacity: 0.7 }}>Cápsula</div>
-                <div style={{ fontWeight: 700 }}>{dress.capsule_name || "-"}</div>
-              </div>
+          <div className="grid grid-2 dress-kpis">
+            <div className="dress-kpi">
+              <div className="dress-kpi-label">Precio</div>
+              <div className="dress-kpi-value">{formatPrice(dress.price)}</div>
+            </div>
+            <div className="dress-kpi">
+              <div className="dress-kpi-label">Cápsula</div>
+              <div className="dress-kpi-value">{dress.capsule_name || "-"}</div>
+            </div>
+            <div className="dress-kpi">
+              <div className="dress-kpi-label">Talle</div>
+              <div className="dress-kpi-value">{dress.size || "-"}</div>
+            </div>
+            <div className="dress-kpi">
+              <div className="dress-kpi-label">Color</div>
+              <div className="dress-kpi-value">{dress.color || "-"}</div>
+            </div>
+            <div className="dress-kpi">
+              <div className="dress-kpi-label">Ubicación</div>
+              <div className="dress-kpi-value">{dress.location || "-"}</div>
+            </div>
+            <div className="dress-kpi">
+              <div className="dress-kpi-label">Estado</div>
+              <div className="dress-kpi-value">{dressStatusLabel(dress.status)}</div>
+            </div>
+          </div>
 
-              <div>
-                <div style={{ opacity: 0.7 }}>Precio</div>
-                <div style={{ fontWeight: 700 }}>{formatPrice(dress.price)}</div>
-              </div>
-
-              <div>
-                <div style={{ opacity: 0.7 }}>Talle</div>
-                <div style={{ fontWeight: 700 }}>{dress.size || "-"}</div>
-              </div>
-
-              <div>
-                <div style={{ opacity: 0.7 }}>Color</div>
-                <div style={{ fontWeight: 700 }}>{dress.color || "-"}</div>
-              </div>
-
-              <div>
-                <div style={{ opacity: 0.7 }}>Creado</div>
-                <div style={{ fontWeight: 700 }}>
-                  {dress.created_at ? new Date(dress.created_at).toLocaleString("es-AR") : "-"}
-                </div>
-              </div>
-
-              <div>
-                <div style={{ opacity: 0.7 }}>Notas</div>
-                <div style={{ fontWeight: 700 }}>{dress.notes || "-"}</div>
-              </div>
+          <div className="dress-meta">
+            <div className="dress-meta-row">
+              <div className="dress-meta-label">Notas</div>
+              <div className="dress-meta-value dress-notes">{dress.notes || "-"}</div>
             </div>
           </div>
         </div>
       </div>
 
-      <style>{`
-        @media (max-width: 720px){
-          .card > div {
-            grid-template-columns: 1fr !important;
-          }
-        }
-      `}</style>
+      <div className="card">
+        <h3>Historial</h3>
+        <div className="page-sub" style={{ marginBottom: 10 }}>
+          Próximo paso: mostrar préstamos y ventas del vestido.
+        </div>
+
+        <div className="grid grid-2">
+          <button className="btn" onClick={() => alert("Ver préstamos (pendiente)")} type="button">
+            Ver préstamos
+          </button>
+          <button className="btn" onClick={() => alert("Ver ventas (pendiente)")} type="button">
+            Ver ventas
+          </button>
+        </div>
+      </div>
+
+      {loanForm && (
+        <div className="modal-overlay" onClick={() => setLoanForm(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>Nuevo préstamo</h3>
+              <button className="btn btn-icon" type="button" onClick={() => setLoanForm(null)}>
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={createLoan}>
+              <div className="modal-grid">
+                <input
+                  placeholder="Nombre cliente"
+                  required
+                  value={loanForm.customer_name || ""}
+                  onChange={(e) => setLoanForm({ ...loanForm, customer_name: e.target.value })}
+                />
+                <input
+                  placeholder="DNI"
+                  value={loanForm.customer_dni || ""}
+                  onChange={(e) => setLoanForm({ ...loanForm, customer_dni: e.target.value })}
+                />
+                <input
+                  placeholder="Teléfono"
+                  value={loanForm.customer_phone || ""}
+                  onChange={(e) => setLoanForm({ ...loanForm, customer_phone: e.target.value })}
+                />
+                <input
+                  placeholder="Email"
+                  value={loanForm.customer_email || ""}
+                  onChange={(e) => setLoanForm({ ...loanForm, customer_email: e.target.value })}
+                />
+                <input
+                  placeholder="Evento"
+                  value={loanForm.event_name || ""}
+                  onChange={(e) => setLoanForm({ ...loanForm, event_name: e.target.value })}
+                />
+                <input
+                  type="number"
+                  placeholder="Días"
+                  min={1}
+                  max={60}
+                  value={loanForm.loan_days || 3}
+                  onChange={(e) => setLoanForm({ ...loanForm, loan_days: Number(e.target.value) })}
+                />
+                <input
+                  placeholder="Retira"
+                  value={loanForm.picked_up_by || ""}
+                  onChange={(e) => setLoanForm({ ...loanForm, picked_up_by: e.target.value })}
+                />
+                <input
+                  placeholder="Notas"
+                  value={loanForm.notes || ""}
+                  onChange={(e) => setLoanForm({ ...loanForm, notes: e.target.value })}
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button type="submit">Confirmar</button>
+                <button type="button" onClick={() => setLoanForm(null)}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {saleForm && (
+        <div className="modal-overlay" onClick={() => setSaleForm(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>Registrar venta</h3>
+              <button className="btn btn-icon" type="button" onClick={() => setSaleForm(null)}>
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={createSale}>
+              <div className="modal-grid">
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  placeholder="Precio de venta"
+                  required
+                  value={saleForm.sold_price}
+                  onChange={(e) => setSaleForm({ ...saleForm, sold_price: e.target.value })}
+                />
+                <input
+                  placeholder="Comprador (opcional)"
+                  value={saleForm.buyer_name || ""}
+                  onChange={(e) => setSaleForm({ ...saleForm, buyer_name: e.target.value })}
+                />
+                <input
+                  placeholder="Notas (opcional)"
+                  value={saleForm.notes || ""}
+                  onChange={(e) => setSaleForm({ ...saleForm, notes: e.target.value })}
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button type="submit">Confirmar venta</button>
+                <button type="button" onClick={() => setSaleForm(null)}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
