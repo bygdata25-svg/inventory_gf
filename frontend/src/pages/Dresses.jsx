@@ -66,7 +66,6 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
     setError("");
 
     try {
-      // Pedimos una cantidad grande para manejar filtros/paginación localmente
       const data = await api.request(`${apiBase}/api/dresses?page=1&page_size=1000`);
 
       if (Array.isArray(data)) {
@@ -185,7 +184,34 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
 
   async function sendToWorkshop(dressId) {
     if (!canEdit) return;
-    alert(`Enviar a Taller para vestido #${dressId} (pendiente de conectar con backend)`);
+
+    try {
+      await api.request(`${apiBase}/api/dresses/${dressId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "MAINTENANCE" })
+      });
+
+      await loadAllDresses();
+    } catch (e) {
+      alert(e?.detail || "Error enviando a taller");
+    }
+  }
+
+  async function markAsAvailable(dressId) {
+    if (!canEdit) return;
+
+    try {
+      await api.request(`${apiBase}/api/dresses/${dressId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "AVAILABLE" })
+      });
+
+      await loadAllDresses();
+    } catch (e) {
+      alert(e?.detail || "Error cambiando a disponible");
+    }
   }
 
   function applyFilters(e) {
@@ -221,7 +247,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
     if (status === "LOANED") return <Badge variant="orange">{dressStatusLabel(status)}</Badge>;
     if (status === "SOLD") return <Badge variant="blue">{dressStatusLabel(status)}</Badge>;
     if (status === "CLEANING") return <Badge variant="yellow">{dressStatusLabel(status)}</Badge>;
-    if (status === "MAINTENANCE") return <Badge variant="default">{dressStatusLabel(status)}</Badge>;
+    if (status === "MAINTENANCE") return <Badge variant="orange">{dressStatusLabel(status)}</Badge>;
     if (status === "RETIRED") return <Badge variant="default">{dressStatusLabel(status)}</Badge>;
     return <Badge variant="default">{status}</Badge>;
   }
@@ -517,6 +543,12 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
                           Taller
                         </button>
                       </>
+                    )}
+
+                    {canEdit && (d.status === "MAINTENANCE" || d.status === "CLEANING") && (
+                      <button onClick={() => markAsAvailable(d.id)} type="button">
+                        Volver a disponible
+                      </button>
                     )}
                   </td>
                 </tr>
