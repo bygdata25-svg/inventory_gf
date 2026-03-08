@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Badge from "../components/Badge";
 import { dressStatusLabel } from "../utils/status";
 import { t } from "../i18n";
@@ -10,7 +10,7 @@ function resolvePhoto(photoUrl) {
   return `/${photoUrl.replace(/^\/+/, "")}`;
 }
 
-function buildDressQuery({ filters, page, pageSize }) {
+function buildDressQuery(filters, page, pageSize) {
   const params = new URLSearchParams();
 
   const capsuleId = String(filters.capsule_id || "").trim();
@@ -49,7 +49,6 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
 
-  // filtros editables en pantalla
   const [filterForm, setFilterForm] = useState({
     capsule_id: "",
     color: "",
@@ -58,7 +57,6 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
     price_max: ""
   });
 
-  // filtros realmente aplicados al request
   const [appliedFilters, setAppliedFilters] = useState({
     capsule_id: "",
     color: "",
@@ -82,30 +80,21 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
   const [loanForm, setLoanForm] = useState(null);
   const [saleForm, setSaleForm] = useState(null);
 
-  async function load({ pageToLoad = 1, filtersToUse = appliedFilters } = {}) {
+  async function fetchDresses(currentPage, currentFilters) {
     setLoading(true);
     setError("");
 
     try {
-      const query = buildDressQuery({
-        filters: filtersToUse,
-        page: pageToLoad,
-        pageSize
-      });
-
-      const url = `${apiBase}/api/dresses?${query}`;
-      const data = await api.request(url);
+      const query = buildDressQuery(currentFilters, currentPage, pageSize);
+      const data = await api.request(`${apiBase}/api/dresses?${query}`);
 
       if (Array.isArray(data)) {
-        // compatibilidad si el backend devuelve lista plana
         setItems(data);
         setTotal(data.length);
-        setPage(1);
         setPages(1);
       } else {
         setItems(Array.isArray(data?.items) ? data.items : []);
         setTotal(Number(data?.total || 0));
-        setPage(Number(data?.page || pageToLoad));
         setPages(Number(data?.pages || 1));
       }
     } catch (e) {
@@ -113,7 +102,6 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
       setError(e?.detail || t("ui.error"));
       setItems([]);
       setTotal(0);
-      setPage(1);
       setPages(1);
     } finally {
       setLoading(false);
@@ -139,11 +127,10 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
   }, []);
 
   useEffect(() => {
-    if (showList) {
-      load({ pageToLoad: 1, filtersToUse: appliedFilters });
-    }
+    if (!showList) return;
+    fetchDresses(page, appliedFilters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showList]);
+  }, [showList, page, appliedFilters]);
 
   async function createDress(e) {
     e.preventDefault();
@@ -179,7 +166,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
       });
 
       if (showList) {
-        load({ pageToLoad: page, filtersToUse: appliedFilters });
+        fetchDresses(page, appliedFilters);
       }
     } catch (e) {
       alert(e?.detail || "Error creando vestido");
@@ -197,7 +184,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
         body: JSON.stringify(loanForm)
       });
       setLoanForm(null);
-      load({ pageToLoad: page, filtersToUse: appliedFilters });
+      fetchDresses(page, appliedFilters);
     } catch (e) {
       alert(e?.detail || "Error creando préstamo");
     }
@@ -220,7 +207,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
       });
 
       setSaleForm(null);
-      load({ pageToLoad: page, filtersToUse: appliedFilters });
+      fetchDresses(page, appliedFilters);
     } catch (e) {
       alert(e?.detail || "Error registrando venta");
     }
@@ -234,16 +221,15 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
   function applyFilters(e) {
     e.preventDefault();
 
-    const normalized = {
+    setAppliedFilters({
       capsule_id: String(filterForm.capsule_id || "").trim(),
       color: String(filterForm.color || "").trim(),
       location: String(filterForm.location || "").trim(),
       price_min: String(filterForm.price_min ?? "").trim(),
       price_max: String(filterForm.price_max ?? "").trim()
-    };
+    });
 
-    setAppliedFilters(normalized);
-    load({ pageToLoad: 1, filtersToUse: normalized });
+    setPage(1);
   }
 
   function clearFilters() {
@@ -257,32 +243,18 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
 
     setFilterForm(empty);
     setAppliedFilters(empty);
-    load({ pageToLoad: 1, filtersToUse: empty });
+    setPage(1);
   }
 
   function DressStatusBadge({ status }) {
-    if (status === "AVAILABLE") {
-      return <Badge variant="green">{dressStatusLabel(status)}</Badge>;
-    }
-    if (status === "LOANED") {
-      return <Badge variant="orange">{dressStatusLabel(status)}</Badge>;
-    }
-    if (status === "SOLD") {
-      return <Badge variant="blue">{dressStatusLabel(status)}</Badge>;
-    }
-    if (status === "CLEANING") {
-      return <Badge variant="yellow">{dressStatusLabel(status)}</Badge>;
-    }
-    if (status === "MAINTENANCE") {
-      return <Badge variant="default">{dressStatusLabel(status)}</Badge>;
-    }
-    if (status === "RETIRED") {
-      return <Badge variant="default">{dressStatusLabel(status)}</Badge>;
-    }
+    if (status === "AVAILABLE") return <Badge variant="green">{dressStatusLabel(status)}</Badge>;
+    if (status === "LOANED") return <Badge variant="orange">{dressStatusLabel(status)}</Badge>;
+    if (status === "SOLD") return <Badge variant="blue">{dressStatusLabel(status)}</Badge>;
+    if (status === "CLEANING") return <Badge variant="yellow">{dressStatusLabel(status)}</Badge>;
+    if (status === "MAINTENANCE") return <Badge variant="default">{dressStatusLabel(status)}</Badge>;
+    if (status === "RETIRED") return <Badge variant="default">{dressStatusLabel(status)}</Badge>;
     return <Badge variant="default">{status}</Badge>;
   }
-
-  const tableRows = useMemo(() => items || [], [items]);
 
   if (selectedDressId) {
     return (
@@ -292,7 +264,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
         role={role}
         dressId={selectedDressId}
         onBack={() => setSelectedDressId(null)}
-        onRefresh={() => load({ pageToLoad: page, filtersToUse: appliedFilters })}
+        onRefresh={() => fetchDresses(page, appliedFilters)}
       />
     );
   }
@@ -312,32 +284,27 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
               onChange={(e) => setForm({ ...form, code: e.target.value })}
               required
             />
-
             <input
               placeholder="Nombre"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
             />
-
             <input
               placeholder="Talle"
               value={form.size}
               onChange={(e) => setForm({ ...form, size: e.target.value })}
             />
-
             <input
               placeholder="Color"
               value={form.color}
               onChange={(e) => setForm({ ...form, color: e.target.value })}
             />
-
             <input
               placeholder="Ubicación"
               value={form.location}
               onChange={(e) => setForm({ ...form, location: e.target.value })}
             />
-
             <select
               value={form.capsule_id}
               onChange={(e) => setForm({ ...form, capsule_id: e.target.value })}
@@ -350,7 +317,6 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
                 </option>
               ))}
             </select>
-
             <input
               type="number"
               min="0"
@@ -359,21 +325,18 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
               value={form.price}
               onChange={(e) => setForm({ ...form, price: e.target.value })}
             />
-
             <input
               placeholder="Foto (URL o ruta relativa)"
               value={form.photo_url}
               onChange={(e) => setForm({ ...form, photo_url: e.target.value })}
               style={{ minWidth: 260 }}
             />
-
             <input
               placeholder="Notas"
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               style={{ minWidth: 240 }}
             />
-
             <button type="submit">{t("actions.create") || "Crear"}</button>
           </div>
 
@@ -463,7 +426,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
               </tr>
             </thead>
             <tbody>
-              {tableRows.map((d) => (
+              {items.map((d) => (
                 <tr
                   key={d.id}
                   className="dress-row"
@@ -541,10 +504,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
                           Vender
                         </button>
 
-                        <button
-                          onClick={() => sendToWorkshop(d.id)}
-                          type="button"
-                        >
+                        <button onClick={() => sendToWorkshop(d.id)} type="button">
                           Taller
                         </button>
                       </>
@@ -553,7 +513,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
                 </tr>
               ))}
 
-              {!loading && tableRows.length === 0 && (
+              {!loading && items.length === 0 && (
                 <tr>
                   <td colSpan={10} style={{ opacity: 0.7 }}>
                     Sin resultados
@@ -581,7 +541,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
               <button
                 type="button"
                 disabled={page <= 1 || loading}
-                onClick={() => load({ pageToLoad: page - 1, filtersToUse: appliedFilters })}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
               >
                 Anterior
               </button>
@@ -589,7 +549,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
               <button
                 type="button"
                 disabled={page >= pages || loading}
-                onClick={() => load({ pageToLoad: page + 1, filtersToUse: appliedFilters })}
+                onClick={() => setPage((p) => Math.min(pages, p + 1))}
               >
                 Siguiente
               </button>
