@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Badge from "../components/Badge";
 import { dressStatusLabel } from "../utils/status";
 import { t } from "../i18n";
@@ -10,25 +10,8 @@ function resolvePhoto(photoUrl) {
   return `/${photoUrl.replace(/^\/+/, "")}`;
 }
 
-function buildDressQuery(filters, page, pageSize) {
-  const params = new URLSearchParams();
-
-  const capsuleId = String(filters.capsule_id || "").trim();
-  const color = String(filters.color || "").trim();
-  const location = String(filters.location || "").trim();
-  const priceMin = String(filters.price_min ?? "").trim();
-  const priceMax = String(filters.price_max ?? "").trim();
-
-  if (capsuleId) params.set("capsule_id", capsuleId);
-  if (color) params.set("color", color);
-  if (location) params.set("location", location);
-  if (priceMin !== "") params.set("price_min", priceMin);
-  if (priceMax !== "") params.set("price_max", priceMax);
-
-  params.set("page", String(page));
-  params.set("page_size", String(pageSize));
-
-  return params.toString();
+function normalizeText(value) {
+  return String(value || "").trim().toLowerCase();
 }
 
 export default function Dresses({ api, apiBase, role, mode = "list" }) {
@@ -37,7 +20,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
   const showCreate = mode === "create";
   const showList = mode === "list";
 
-  const [items, setItems] = useState([]);
+  const [allItems, setAllItems] = useState([]);
   const [capsules, setCapsules] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingCapsules, setLoadingCapsules] = useState(false);
@@ -46,8 +29,6 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
   const [selectedDressId, setSelectedDressId] = useState(null);
 
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [pages, setPages] = useState(1);
 
   const [filterForm, setFilterForm] = useState({
     capsule_id: "",
@@ -80,29 +61,23 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
   const [loanForm, setLoanForm] = useState(null);
   const [saleForm, setSaleForm] = useState(null);
 
-  async function fetchDresses(currentPage, currentFilters) {
+  async function loadAllDresses() {
     setLoading(true);
     setError("");
 
     try {
-      const query = buildDressQuery(currentFilters, currentPage, pageSize);
-      const data = await api.request(`${apiBase}/api/dresses?${query}`);
+      // Pedimos una cantidad grande para manejar filtros/paginación localmente
+      const data = await api.request(`${apiBase}/api/dresses?page=1&page_size=1000`);
 
       if (Array.isArray(data)) {
-        setItems(data);
-        setTotal(data.length);
-        setPages(1);
+        setAllItems(data);
       } else {
-        setItems(Array.isArray(data?.items) ? data.items : []);
-        setTotal(Number(data?.total || 0));
-        setPages(Number(data?.pages || 1));
+        setAllItems(Array.isArray(data?.items) ? data.items : []);
       }
     } catch (e) {
       console.error("Error loading dresses", e);
       setError(e?.detail || t("ui.error"));
-      setItems([]);
-      setTotal(0);
-      setPages(1);
+      setAllItems([]);
     } finally {
       setLoading(false);
     }
@@ -123,14 +98,11 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
 
   useEffect(() => {
     loadCapsules();
+    if (showList) {
+      loadAllDresses();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (!showList) return;
-    fetchDresses(page, appliedFilters);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showList, page, appliedFilters]);
+  }, [showList]);
 
   async function createDress(e) {
     e.preventDefault();
@@ -165,9 +137,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
         capsule_id: ""
       });
 
-      if (showList) {
-        fetchDresses(page, appliedFilters);
-      }
+      await loadAllDresses();
     } catch (e) {
       alert(e?.detail || "Error creando vestido");
     }
@@ -184,7 +154,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
         body: JSON.stringify(loanForm)
       });
       setLoanForm(null);
-      fetchDresses(page, appliedFilters);
+      await loadAllDresses();
     } catch (e) {
       alert(e?.detail || "Error creando préstamo");
     }
@@ -207,7 +177,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
       });
 
       setSaleForm(null);
-      fetchDresses(page, appliedFilters);
+      await loadAllDresses();
     } catch (e) {
       alert(e?.detail || "Error registrando venta");
     }
@@ -256,6 +226,45 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
     return <Badge variant="default">{status}</Badge>;
   }
 
+  const filteredItems = useMemo(() => {
+    const capsuleId = normalizeText(appliedFilters.capsule_id);
+    const color = normalizeText(appliedFilters.color);
+    const location = normalizeText(appliedFilters.location);
+    const priceMin = appliedFilters.price_min !== "" ? Number(appliedFilters.price_min) : null;
+    const priceMax = appliedFilters.price_max !== "" ? Number(appliedFilters.price_max) : null;
+
+    return (allItems || []).filter((item) => {
+      const itemCapsuleId = String(item.capsule_id ?? "").trim();
+      const itemColor = normalizeText(item.color);
+      const itemLocation = normalizeText(item.location);
+      const itemPrice = item.price != null ? Number(item.price) : null;
+
+      if (capsuleId && itemCapsuleId !== capsuleId) return false;
+      if (color && !itemColor.includes(color)) return false;
+      if (location && !itemLocation.includes(location)) return false;
+      if (priceMin !== null && (itemPrice === null || itemPrice < priceMin)) return false;
+      if (priceMax !== null && (itemPrice === null || itemPrice > priceMax)) return false;
+
+      return true;
+    });
+  }, [allItems, appliedFilters]);
+
+  const total = filteredItems.length;
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+
+  const paginatedItems = useMemo(() => {
+    const safePage = Math.min(page, pages);
+    const start = (safePage - 1) * pageSize;
+    const end = start + pageSize;
+    return filteredItems.slice(start, end);
+  }, [filteredItems, page, pages]);
+
+  useEffect(() => {
+    if (page > pages) {
+      setPage(pages);
+    }
+  }, [page, pages]);
+
   if (selectedDressId) {
     return (
       <DressDetail
@@ -264,7 +273,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
         role={role}
         dressId={selectedDressId}
         onBack={() => setSelectedDressId(null)}
-        onRefresh={() => fetchDresses(page, appliedFilters)}
+        onRefresh={loadAllDresses}
       />
     );
   }
@@ -426,7 +435,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
               </tr>
             </thead>
             <tbody>
-              {items.map((d) => (
+              {paginatedItems.map((d) => (
                 <tr
                   key={d.id}
                   className="dress-row"
@@ -513,7 +522,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
                 </tr>
               ))}
 
-              {!loading && items.length === 0 && (
+              {!loading && paginatedItems.length === 0 && (
                 <tr>
                   <td colSpan={10} style={{ opacity: 0.7 }}>
                     Sin resultados
