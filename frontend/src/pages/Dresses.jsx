@@ -13,6 +13,7 @@ function resolvePhoto(photoUrl) {
 
 export default function Dresses({ api, apiBase, role }) {
   const canEdit = role === "ADMIN" || role === "OPERATOR";
+  const pageSize = 15;
 
   const [items, setItems] = useState([]);
   const [capsules, setCapsules] = useState([]);
@@ -22,11 +23,24 @@ export default function Dresses({ api, apiBase, role }) {
 
   const [selectedDressId, setSelectedDressId] = useState(null);
 
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [pages, setPages] = useState(1);
+
+  const [filters, setFilters] = useState({
+    capsule_id: "",
+    color: "",
+    location: "",
+    price_min: "",
+    price_max: ""
+  });
+
   const [form, setForm] = useState({
     code: "",
     name: "",
     size: "",
     color: "",
+    location: "",
     notes: "",
     photo_url: "",
     price: "",
@@ -36,15 +50,44 @@ export default function Dresses({ api, apiBase, role }) {
   const [loanForm, setLoanForm] = useState(null);
   const [saleForm, setSaleForm] = useState(null);
 
-  async function load() {
+  async function load(pageToLoad = 1, activeFilters = filters) {
     setLoading(true);
     setError("");
+
     try {
-      const data = await api.request(`${apiBase}/api/dresses`);
-      setItems(Array.isArray(data) ? data : []);
+      const params = new URLSearchParams();
+
+      if (activeFilters.capsule_id) {
+        params.set("capsule_id", activeFilters.capsule_id);
+      }
+      if (activeFilters.color.trim()) {
+        params.set("color", activeFilters.color.trim());
+      }
+      if (activeFilters.location.trim()) {
+        params.set("location", activeFilters.location.trim());
+      }
+      if (activeFilters.price_min !== "") {
+        params.set("price_min", activeFilters.price_min);
+      }
+      if (activeFilters.price_max !== "") {
+        params.set("price_max", activeFilters.price_max);
+      }
+
+      params.set("page", String(pageToLoad));
+      params.set("page_size", String(pageSize));
+
+      const data = await api.request(`${apiBase}/api/dresses?${params.toString()}`);
+
+      setItems(Array.isArray(data?.items) ? data.items : []);
+      setTotal(Number(data?.total || 0));
+      setPage(Number(data?.page || pageToLoad));
+      setPages(Number(data?.pages || 1));
     } catch (e) {
       setError(e?.detail || t("ui.error"));
       setItems([]);
+      setTotal(0);
+      setPage(1);
+      setPages(1);
     } finally {
       setLoading(false);
     }
@@ -64,7 +107,7 @@ export default function Dresses({ api, apiBase, role }) {
   }
 
   useEffect(() => {
-    load();
+    load(1, filters);
     loadCapsules();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -82,6 +125,7 @@ export default function Dresses({ api, apiBase, role }) {
           name: form.name.trim(),
           size: form.size || null,
           color: form.color || null,
+          location: form.location || null,
           notes: form.notes || null,
           photo_url: form.photo_url || null,
           price: form.price === "" ? null : Number(form.price),
@@ -94,13 +138,14 @@ export default function Dresses({ api, apiBase, role }) {
         name: "",
         size: "",
         color: "",
+        location: "",
         notes: "",
         photo_url: "",
         price: "",
         capsule_id: ""
       });
 
-      load();
+      load(page, filters);
     } catch (e) {
       alert(e?.detail || "Error creando vestido");
     }
@@ -117,7 +162,7 @@ export default function Dresses({ api, apiBase, role }) {
         body: JSON.stringify(loanForm)
       });
       setLoanForm(null);
-      load();
+      load(page, filters);
     } catch (e) {
       alert(e?.detail || "Error creando préstamo");
     }
@@ -140,10 +185,32 @@ export default function Dresses({ api, apiBase, role }) {
       });
 
       setSaleForm(null);
-      load();
+      load(page, filters);
     } catch (e) {
       alert(e?.detail || "Error registrando venta");
     }
+  }
+
+  async function sendToWorkshop(dressId) {
+    if (!canEdit) return;
+    alert(`Enviar a Taller para vestido #${dressId} (pendiente de conectar con backend)`);
+  }
+
+  function applyFilters(e) {
+    e.preventDefault();
+    load(1, filters);
+  }
+
+  function clearFilters() {
+    const emptyFilters = {
+      capsule_id: "",
+      color: "",
+      location: "",
+      price_min: "",
+      price_max: ""
+    };
+    setFilters(emptyFilters);
+    load(1, emptyFilters);
   }
 
   function DressStatusBadge({ status }) {
@@ -184,7 +251,7 @@ export default function Dresses({ api, apiBase, role }) {
         role={role}
         dressId={selectedDressId}
         onBack={() => setSelectedDressId(null)}
-        onRefresh={load}
+        onRefresh={() => load(page, filters)}
       />
     );
   }
@@ -222,6 +289,12 @@ export default function Dresses({ api, apiBase, role }) {
               placeholder="Color"
               value={form.color}
               onChange={(e) => setForm({ ...form, color: e.target.value })}
+            />
+
+            <input
+              placeholder="Ubicación"
+              value={form.location}
+              onChange={(e) => setForm({ ...form, location: e.target.value })}
             />
 
             <select
@@ -269,7 +342,65 @@ export default function Dresses({ api, apiBase, role }) {
         </form>
       )}
 
+      <div className="card" style={{ marginBottom: 18 }}>
+        <form onSubmit={applyFilters}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <select
+              value={filters.capsule_id}
+              onChange={(e) => setFilters({ ...filters, capsule_id: e.target.value })}
+              style={{ minWidth: 180 }}
+            >
+              <option value="">Todas las cápsulas</option>
+              {capsules.map((capsule) => (
+                <option key={capsule.id} value={capsule.id}>
+                  {capsule.name}
+                </option>
+              ))}
+            </select>
+
+            <input
+              placeholder="Filtrar por color"
+              value={filters.color}
+              onChange={(e) => setFilters({ ...filters, color: e.target.value })}
+            />
+
+            <input
+              placeholder="Filtrar por ubicación"
+              value={filters.location}
+              onChange={(e) => setFilters({ ...filters, location: e.target.value })}
+            />
+
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Precio mínimo"
+              value={filters.price_min}
+              onChange={(e) => setFilters({ ...filters, price_min: e.target.value })}
+            />
+
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Precio máximo"
+              value={filters.price_max}
+              onChange={(e) => setFilters({ ...filters, price_max: e.target.value })}
+            />
+
+            <button type="submit">{t("actions.search") || "Buscar"}</button>
+            <button type="button" onClick={clearFilters}>
+              {t("actions.clear") || "Limpiar"}
+            </button>
+          </div>
+        </form>
+      </div>
+
       {loading && <div>Cargando...</div>}
+
+      <div style={{ marginBottom: 10, opacity: 0.8 }}>
+        Total: {total} vestido(s)
+      </div>
 
       <table>
         <thead>
@@ -279,6 +410,7 @@ export default function Dresses({ api, apiBase, role }) {
             <th>Nombre</th>
             <th>Talle</th>
             <th>Color</th>
+            <th>Ubicación</th>
             <th>Cápsula</th>
             <th>Precio</th>
             <th>Estado</th>
@@ -318,8 +450,9 @@ export default function Dresses({ api, apiBase, role }) {
               <td style={{ fontWeight: 800 }}>{d.name}</td>
               <td>{d.size || "—"}</td>
               <td>{d.color || "—"}</td>
+              <td>{d.location || "—"}</td>
               <td>{d.capsule_name || "—"}</td>
-              <td>{d.price != null ? `$ ${Number(d.price).toFixed(2)}` : "—"}</td>
+              <td>{d.price != null ? `U$S ${Number(d.price).toFixed(2)}` : "—"}</td>
               <td>
                 <DressStatusBadge status={d.status} />
               </td>
@@ -362,6 +495,13 @@ export default function Dresses({ api, apiBase, role }) {
                     >
                       Vender
                     </button>
+
+                    <button
+                      onClick={() => sendToWorkshop(d.id)}
+                      type="button"
+                    >
+                      Taller
+                    </button>
                   </>
                 )}
               </td>
@@ -370,13 +510,46 @@ export default function Dresses({ api, apiBase, role }) {
 
           {!loading && tableRows.length === 0 && (
             <tr>
-              <td colSpan={9} style={{ opacity: 0.7 }}>
+              <td colSpan={10} style={{ opacity: 0.7 }}>
                 Sin resultados
               </td>
             </tr>
           )}
         </tbody>
       </table>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          marginTop: 14,
+          flexWrap: "wrap"
+        }}
+      >
+        <div style={{ opacity: 0.8 }}>
+          Página {page} de {pages}
+        </div>
+
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            type="button"
+            disabled={page <= 1 || loading}
+            onClick={() => load(page - 1, filters)}
+          >
+            Anterior
+          </button>
+
+          <button
+            type="button"
+            disabled={page >= pages || loading}
+            onClick={() => load(page + 1, filters)}
+          >
+            Siguiente
+          </button>
+        </div>
+      </div>
 
       {loanForm && (
         <div className="modal-overlay" onClick={() => setLoanForm(null)}>

@@ -30,10 +30,7 @@ function formatPrice(value) {
   if (value === null || value === undefined || value === "") return "-";
   const n = Number(value);
   if (Number.isNaN(n)) return String(value);
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    maximumFractionDigits: 0
+     return `U$S ${n.toFixed(2)}`;
   }).format(n);
 }
 

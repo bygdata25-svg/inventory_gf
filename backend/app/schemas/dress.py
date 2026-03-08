@@ -1,6 +1,8 @@
 from datetime import datetime
+from math import ceil
 from pydantic import BaseModel, Field
 from typing import Optional
+
 from app.models.dress import DressStatus
 
 
@@ -13,6 +15,7 @@ class DressCreate(BaseModel):
     photo_url: Optional[str] = None
     price: Optional[float] = None
     capsule_id: Optional[int] = None
+    location: Optional[str] = None
 
 
 class DressOut(BaseModel):
@@ -27,7 +30,16 @@ class DressOut(BaseModel):
     photo_url: Optional[str]
     price: Optional[float]
     capsule_id: Optional[int]
-    capsule_name: Optional[str] = None  # lo seteamos desde el modelo/consulta
+    capsule_name: Optional[str] = None
+    location: Optional[str]
 
     class Config:
         from_attributes = True
+
+
+class DressListOut(BaseModel):
+    items: list[DressOut]
+    total: int
+    page: int
+    page_size: int
+    pages: int

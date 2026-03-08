@@ -31,15 +31,22 @@ class Dress(Base):
         index=True
     )
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
 
     photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-
-    # nuevos campos
     price: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
-    capsule_id: Mapped[int | None] = mapped_column(ForeignKey("capsules.id"), nullable=True, index=True)
 
-    # relaciones
+    capsule_id: Mapped[int | None] = mapped_column(
+        ForeignKey("capsules.id"),
+        nullable=True,
+        index=True
+    )
+
+    location: Mapped[str | None] = mapped_column(
+        String(120),
+        nullable=True,
+        index=True
+    )
+
     capsule: Mapped["Capsule"] = relationship("Capsule", back_populates="dresses")
     loans: Mapped[list["DressLoan"]] = relationship(back_populates="dress")

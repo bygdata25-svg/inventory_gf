@@ -1,12 +1,14 @@
+from math import ceil
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from app.db.session import get_db
 from app.models.user import User
 from app.models.dress import Dress, DressStatus
 from app.models.capsule import Capsule
-from app.schemas.dress import DressCreate, DressOut
+from app.schemas.dress import DressCreate, DressOut, DressListOut
 from app.core.authz import get_current_user
 
 router = APIRouter(prefix="/api/dresses", tags=["Dresses"])
@@ -35,33 +37,95 @@ def create_dress(
     return result
 
 
-@router.get("", response_model=list[DressOut])
+@router.get("", response_model=DressListOut)
 def list_dresses(
     status: DressStatus | None = Query(default=None),
     capsule_id: int | None = Query(default=None),
     q: str | None = Query(default=None),
+    color: str | None = Query(default=None),
+    location: str | None = Query(default=None),
+    price_min: float | None = Query(default=None),
+    price_max: float | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=15, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    stmt = select(Dress, Capsule.name).outerjoin(Capsule, Dress.capsule_id == Capsule.id)
+    base_stmt = select(Dress, Capsule.name).outerjoin(Capsule, Dress.capsule_id == Capsule.id)
 
     if status:
-        stmt = stmt.where(Dress.status == status)
+        base_stmt = base_stmt.where(Dress.status == status)
+
     if capsule_id:
-        stmt = stmt.where(Dress.capsule_id == capsule_id)
+        base_stmt = base_stmt.where(Dress.capsule_id == capsule_id)
+
     if q:
         like = f"%{q}%"
-        stmt = stmt.where((Dress.code.ilike(like)) | (Dress.name.ilike(like)))
+        base_stmt = base_stmt.where(
+            (Dress.code.ilike(like)) |
+            (Dress.name.ilike(like))
+        )
 
-    rows = db.execute(stmt.order_by(Dress.id.desc())).all()
+    if color:
+        base_stmt = base_stmt.where(Dress.color.ilike(f"%{color}%"))
 
-    out = []
+    if location:
+        base_stmt = base_stmt.where(Dress.location.ilike(f"%{location}%"))
+
+    if price_min is not None:
+        base_stmt = base_stmt.where(Dress.price >= price_min)
+
+    if price_max is not None:
+        base_stmt = base_stmt.where(Dress.price <= price_max)
+
+    count_stmt = select(func.count()).select_from(Dress)
+
+    if status:
+        count_stmt = count_stmt.where(Dress.status == status)
+
+    if capsule_id:
+        count_stmt = count_stmt.where(Dress.capsule_id == capsule_id)
+
+    if q:
+        like = f"%{q}%"
+        count_stmt = count_stmt.where(
+            (Dress.code.ilike(like)) |
+            (Dress.name.ilike(like))
+        )
+
+    if color:
+        count_stmt = count_stmt.where(Dress.color.ilike(f"%{color}%"))
+
+    if location:
+        count_stmt = count_stmt.where(Dress.location.ilike(f"%{location}%"))
+
+    if price_min is not None:
+        count_stmt = count_stmt.where(Dress.price >= price_min)
+
+    if price_max is not None:
+        count_stmt = count_stmt.where(Dress.price <= price_max)
+
+    total = db.scalar(count_stmt) or 0
+    pages = ceil(total / page_size) if total > 0 else 1
+    offset = (page - 1) * page_size
+
+    rows = db.execute(
+        base_stmt.order_by(Dress.id.desc()).offset(offset).limit(page_size)
+    ).all()
+
+    items = []
     for dress, capsule_name in rows:
         item = DressOut.model_validate(dress)
         item.capsule_name = capsule_name
-        out.append(item)
+        items.append(item)
 
-    return out
+    return DressListOut(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        pages=pages,
+    )
 
 
 @router.get("/{dress_id}", response_model=DressOut)
