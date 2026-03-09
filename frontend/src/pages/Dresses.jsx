@@ -98,6 +98,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
 } finally {
   setLoading(false);
 }
+}
 
   async function loadCapsules() {
     setLoadingCapsules(true);
@@ -768,7 +769,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
           </div>
         </div>
       )}
-
+}
       <style>{`
         .dress-row:hover td{
           background: rgba(17,17,17,.02);
