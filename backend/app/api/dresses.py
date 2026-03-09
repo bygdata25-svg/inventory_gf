@@ -10,7 +10,7 @@ from app.db.session import get_db
 from app.models.user import User
 from app.models.dress import Dress, DressStatus
 from app.models.capsule import Capsule
-from app.schemas.dress import DressCreate, DressOut, DressListOut, , DressUpdate
+from app.schemas.dress import DressCreate, DressOut, DressListOut, DressUpdate
 from app.core.authz import get_current_user
 
 router = APIRouter(prefix="/api/dresses", tags=["Dresses"])
