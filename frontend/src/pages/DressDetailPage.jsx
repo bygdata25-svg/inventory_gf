@@ -146,29 +146,49 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
     }
   }
 
-  async function saveEdit() {
-    setSavingEdit(true);
-    try {
-      await api.request(`${apiBase}/api/dresses/${dressId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          price: editForm.price === "" ? null : Number(editForm.price),
-          capsule_id: editForm.capsule_id === "" ? null : Number(editForm.capsule_id),
-          location: editForm.location || null,
-          notes: editForm.notes || null
-        })
-      });
+async function saveEdit() {
+  setSavingEdit(true);
 
-      setEditing(false);
-      await loadDetail();
-      if (onRefresh) onRefresh();
-    } catch (e) {
-      alert(e?.detail || "No se pudieron guardar los cambios");
-    } finally {
-      setSavingEdit(false);
+  try {
+    await api.request(`${apiBase}/api/dresses/${dressId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        price: editForm.price === "" ? null : Number(editForm.price),
+        capsule_id: editForm.capsule_id === "" ? null : Number(editForm.capsule_id),
+        location: editForm.location || null,
+        notes: editForm.notes || null
+      })
+    });
+
+    setEditing(false);
+
+    await loadDetail();
+    if (onRefresh) onRefresh();
+
+  } catch (e) {
+
+    let message = "No se pudieron guardar los cambios";
+
+    if (typeof e?.detail === "string") {
+      message = e.detail;
+
+    } else if (Array.isArray(e?.detail)) {
+      message = e.detail.map(x => x?.msg || JSON.stringify(x)).join(" | ");
+
+    } else if (e?.detail && typeof e.detail === "object") {
+      message = e.detail.msg || e.detail.message || JSON.stringify(e.detail);
+
+    } else if (typeof e?.message === "string") {
+      message = e.message;
     }
+
+    alert(message);
+
+  } finally {
+    setSavingEdit(false);
   }
+}
 
   async function createLoan(e) {
     e.preventDefault();
