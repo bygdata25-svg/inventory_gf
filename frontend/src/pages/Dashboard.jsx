@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import Badge from "../components/Badge";
 import { formatCurrency } from "../utils/currency";
 
-export default function Dashboard({ api, apiBase }) {
+export default function Dashboard({ api, apiBase, username }) {
   const [summary, setSummary] = useState(null);
   const [alerts, setAlerts] = useState(null);
   const [error, setError] = useState("");
@@ -83,46 +83,37 @@ export default function Dashboard({ api, apiBase }) {
     <div className="df-dashboard">
       <div className="df-hero">
         <div>
-          <div className="df-hello">Hola, Maria 👋</div>
+          <div className="df-hello">Hola, {username || "Usuario"} 👋</div>
           <div className="df-subtitle">Resumen de tu inventario</div>
         </div>
 
-        <div className="df-search-wrap">
-          <div className="df-search">
-            <span className="df-search-icon">⌕</span>
-            <span className="df-search-placeholder">Buscar...</span>
-          </div>
-        </div>
-      </div>
 
       <div className="df-kpi-grid">
         <DashboardKpiCard
           title="Vestidos"
           value={summary.available + summary.loaned + summary.sold + (summary.maintenance || 0)}
           subtitle={`${summary.available} disponibles`}
-          icon="👗"
-        />
+          icon="D"
+	/>
+	<DashboardKpiCard
+	  title="Préstamos"
+	  value={summary.loaned}
+	  subtitle="Activos"
+	  icon="P"
+	/>
+	<DashboardKpiCard
+	  title="Ventas del mes"
+	  value={summary.sales_month}
+	  subtitle={formatCurrency(summary.revenue_month)}
+	  icon="V"
+	/>
 
-        <DashboardKpiCard
-          title="Préstamos"
-          value={summary.loaned}
-          subtitle="Activos"
-          icon="👜"
-        />
-
-        <DashboardKpiCard
-          title="Ventas del mes"
-          value={summary.sales_month}
-          subtitle={formatCurrency(summary.revenue_month)}
-          icon="💳"
-        />
-
-        <DashboardKpiCard
-          title="Promedio por venta"
-          value={formatCurrency(summary.avg_sale_month)}
-          subtitle="Ticket promedio"
-          icon="◫"
-        />
+	<DashboardKpiCard
+	  title="Promedio por venta"
+	  value={formatCurrency(summary.avg_sale_month)}
+	  subtitle="Ticket promedio"
+	  icon="$"
+	/>
       </div>
 
       <div className="df-main-grid">
@@ -236,28 +227,6 @@ export default function Dashboard({ api, apiBase }) {
           color: rgba(17,17,17,.68);
         }
 
-        .df-search-wrap{
-          margin-left:auto;
-        }
-
-        .df-search{
-          min-width: 320px;
-          display:flex;
-          align-items:center;
-          gap:10px;
-          padding: 14px 18px;
-          border-radius: 999px;
-          background: rgba(255,255,255,.8);
-          border: 1px solid rgba(17,17,17,.06);
-          box-shadow: 0 8px 20px rgba(17,17,17,.06);
-          color: rgba(17,17,17,.55);
-        }
-
-        .df-search-icon{
-          font-size: 20px;
-          line-height: 1;
-        }
-
         .df-kpi-grid{
           display:grid;
           grid-template-columns: repeat(4, minmax(0,1fr));
@@ -296,18 +265,19 @@ export default function Dashboard({ api, apiBase }) {
           font-size: 14px;
         }
 
-        .df-kpi-icon{
-          width:72px;
-          height:72px;
-          border-radius: 999px;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          background: rgba(231,154,138,.14);
-          font-size: 34px;
-          flex: 0 0 72px;
-        }
-
+	.df-kpi-icon{
+	  width:72px;
+	  height:72px;
+	  border-radius: 999px;
+	  display:flex;
+	  align-items:center;
+	  justify-content:center;
+	  background: rgba(231,154,138,.14);
+	  font-size: 28px;
+	  font-weight: 700;
+	  color: #7F4C58;
+	  flex: 0 0 72px;
+	}
         .df-main-grid{
           display:grid;
           grid-template-columns: 1.1fr .9fr;

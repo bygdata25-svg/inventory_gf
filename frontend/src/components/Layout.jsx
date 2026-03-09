@@ -119,16 +119,24 @@ export default function Layout({
               <div className="page-sub">{headerSubtitle}</div>
             </div>
           </div>
+	   <div className="header-right">
+              <div className="header-search">
+             <span className="header-search-icon">⌕</span>
+             <input
+               className="header-search-input"
+               type="text"
+               placeholder="Buscar..."
+             />
+        </div>
 
-          <div className="header-right">
-            <span className="pill">
-              {userLabel}: <b style={{ marginLeft: 4 }}>{roleLabel}</b>
-            </span>
+        <span className="pill">
+          {userLabel}: <b style={{ marginLeft: 4 }}>{roleLabel}</b>
+        </span>
 
-            <button className="btn" onClick={onLogout} type="button" title="Salir">
-              ⎋
-            </button>
-          </div>
+        <button className="btn" onClick={onLogout} type="button" title="Salir">
+          ⎋
+        </button>
+         </div>
         </header>
 
         <div className="content">{children}</div>

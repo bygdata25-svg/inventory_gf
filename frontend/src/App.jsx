@@ -194,7 +194,13 @@ export default function App() {
       {page === "movements" && <Movements api={api} apiBase={API_BASE} role={role} />}
       {page === "users" && role === "ADMIN" && <Users api={api} apiBase={API_BASE} role={role} />}
       {page === "suppliers" && <Suppliers api={api} apiBase={API_BASE} role={role} />}
-      {page === "dashboard" && <Dashboard api={api} apiBase={API_BASE} />}
+      {page === "dashboard" && (
+                <Dashboard
+                  api={api}
+                  apiBase={API_BASE}
+                  username={username}
+                />
+      )}
       {page === "capsules" && <Capsules api={api} apiBase={API_BASE} role={role} />}
 
       {/* ✅ NUEVO: páginas del módulo Vestidos */}

@@ -537,6 +537,13 @@ tr:hover td{
   }
 }
 
+@media (max-width: 820px){
+  .header-search{
+    min-width: 180px;
+    max-width: 220px;
+  }
+}
+
 /* ---------- DRESS DETAIL ---------- */
 .dress-detail-top{
   display:flex;
@@ -666,4 +673,41 @@ tr:hover td{
   .dress-meta-row{
     grid-template-columns: 1fr;
   }
+}
+.header-right{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+}
+
+.header-search{
+  min-width: 300px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.82);
+  border: 1px solid rgba(17,17,17,.06);
+  box-shadow: 0 8px 20px rgba(17,17,17,.05);
+}
+
+.header-search-icon{
+  font-size: 18px;
+  color: rgba(17,17,17,.5);
+  line-height: 1;
+}
+
+.header-search-input{
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  padding: 0;
+  box-shadow: none;
+}
+
+.header-search-input:focus{
+  border: none;
+  box-shadow: none;
 }
