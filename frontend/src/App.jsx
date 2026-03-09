@@ -31,7 +31,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://inventory-gf.onre
 
 export default function App() {
   const [logged, setLogged] = useState(isLoggedIn());
-  const [page, setPage] = useState("movements");
+  const [page, setPage] = useState("dashboard");
   const [me, setMe] = useState(null);
   const [sessionMsg, setSessionMsg] = useState("");
 
@@ -106,76 +106,99 @@ export default function App() {
   const role = me?.role || getRole();
   const username = me?.username || "-";
 
-  const navItems = [
-    { key: "fabrics", label: t("nav.fabrics"), icon: <IconFabric /> },
-    { key: "suppliers", label: t("nav.suppliers"), icon: <IconSupplier /> },
-    { key: "rolls", label: t("nav.rolls"), icon: <IconRoll /> },
-    { key: "movements", label: t("nav.movements"), icon: <IconMove /> },
-    { key: "dashboard", label: "Dashboard", icon: <IconReport /> },
-    { key: "capsules", label: "Cápsulas", icon: <IconFabric /> },
+const navItems = [
+  { key: "dashboard", label: "Inicio", icon: <IconReport /> },
 
-    // ✅ NUEVO: módulo Vestidos / Préstamos
-    {
-      key: "dresses",
-      label: "Vestidos",
-      icon: <IconFabric />,
-      children: [
-    { key: "dresses_create", label: "Crear vestido" },
-    { key: "dresses_list", label: "Listado y filtros" }
-      ]
-    },
-    {
+  {
+    key: "dresses",
+    label: "Vestidos",
+    icon: <IconFabric />,
+    children: [
+      { key: "dresses_create", label: "Crear vestido" },
+      { key: "dresses_list", label: "Listar vestidos" }
+    ]
+  },
+
+  { key: "capsules", label: "Cápsulas", icon: <IconFabric /> },
+
+  {
+    key: "fabrics_group",
+    label: "Telas",
+    icon: <IconFabric />,
+    children: [
+      { key: "fabrics", label: "Telas" },
+      { key: "rolls", label: "Rollos" },
+      { key: "movements", label: "Movimientos de rollos" }
+    ]
+  },
+
+  {
     key: "dress_loans",
     label: (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-      Préstamos
-      {overdueCount > 0 && (
-        <Badge variant="red" pulse>
-          {overdueCount}
-        </Badge>
-      )}
-    </span>
-  ),
-  icon: <IconMove />
-    },
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+        Préstamos
+        {overdueCount > 0 && (
+          <Badge variant="red" pulse>
+            {overdueCount}
+          </Badge>
+        )}
+      </span>
+    ),
+    icon: <IconMove />
+  },
 
-    // ✅ Reportes con submenu
-    {
-      key: "reports",
-      label: t("nav.reports"),
-      icon: <IconReport />,
-      children: [
-        { key: "reports_stock", label: t("reports.menu.stock.title") || "Stock actual" },
-        { key: "reports_valuation", label: t("reports.menu.values.title") || "Valuación" },
-        { key: "reports_movements", label: t("reports.menu.movements.title") || "Movimientos" }
-      ]
-    }
-  ];
+  {
+    key: "reports",
+    label: "Reportes",
+    icon: <IconReport />,
+    children: [
+      { key: "reports_stock", label: t("reports.menu.stock.title") || "Stock actual" },
+      { key: "reports_valuation", label: t("reports.menu.values.title") || "Valuación" },
+      { key: "reports_movements", label: t("reports.menu.movements.title") || "Movimientos" }
+    ]
+  },
 
+  {
+    key: "settings",
+    label: "Ajustes",
+    icon: <IconUsers />,
+    children: [
+      { key: "users", label: "Usuarios" },
+      { key: "suppliers", label: "Proveedores" },
+      { key: "customers", label: "Clientes" }
+    ]
+  }
+];
   if (role === "ADMIN") {
     navItems.push({ key: "users", label: t("nav.users"), icon: <IconUsers /> });
   }
 
-  const pageTitleMap = {
-    fabrics: t("nav.fabrics"),
-    suppliers: t("nav.suppliers"),
-    rolls: t("nav.rolls"),
-    movements: t("nav.movements"),
-    users: t("nav.users"),
+const pageTitleMap = {
+  dashboard: "Inicio",
 
-    // ✅ NUEVO
-    dresses: "Vestidos",
-    dresses_create: "Crear vestido",
-    dresses_list: "Listado y filtros",
-    dress_loans: "Préstamos",
-    dashboard: "Dashboard",
-    capsules: "Cápsulas",
+  dresses: "Vestidos",
+  dresses_create: "Crear vestido",
+  dresses_list: "Listar vestidos",
 
-    reports_stock: t("reports.menu.stock.title") || t("nav.reports"),
-    reports_valuation: t("reports.menu.values.title") || t("nav.reports"),
-    reports_movements: t("reports.menu.movements.title") || t("nav.reports")
-  };
+  capsules: "Cápsulas",
 
+  fabrics_group: "Telas",
+  fabrics: "Telas",
+  rolls: "Rollos",
+  movements: "Movimientos de rollos",
+
+  dress_loans: "Préstamos",
+
+  reports: "Reportes",
+  reports_stock: t("reports.menu.stock.title") || "Stock actual",
+  reports_valuation: t("reports.menu.values.title") || "Valuación",
+  reports_movements: t("reports.menu.movements.title") || "Movimientos",
+
+  settings: "Ajustes",
+  users: "Usuarios",
+  suppliers: "Proveedores",
+  customers: "Clientes"
+};
   return (
     <Layout
       brandTitle="DRESSFLOW"
@@ -189,31 +212,40 @@ export default function App() {
       roleLabel={role}
       onLogout={logout}
     >
-      {page === "fabrics" && <Fabrics api={api} apiBase={API_BASE} role={role} />}
-      {page === "rolls" && <Rolls api={api} apiBase={API_BASE} role={role} />}
-      {page === "movements" && <Movements api={api} apiBase={API_BASE} role={role} />}
-      {page === "users" && role === "ADMIN" && <Users api={api} apiBase={API_BASE} role={role} />}
-      {page === "suppliers" && <Suppliers api={api} apiBase={API_BASE} role={role} />}
-      {page === "dashboard" && (
-                <Dashboard
-                  api={api}
-                  apiBase={API_BASE}
-                  username={username}
-                />
-      )}
-      {page === "capsules" && <Capsules api={api} apiBase={API_BASE} role={role} />}
+    {page === "dashboard" && (
+  <Dashboard
+    api={api}
+    apiBase={API_BASE}
+    username={username}
+  />
+)}
 
-      {/* ✅ NUEVO: páginas del módulo Vestidos */}
-      {page === "dresses" && <Dresses api={api} apiBase={API_BASE} role={role} mode="list" />}
-      {page === "dresses_create" && <Dresses api={api} apiBase={API_BASE} role={role} mode="create" />}
-      {page === "dresses_list" && <Dresses api={api} apiBase={API_BASE} role={role} mode="list" />}
-      {page === "dress_loans" && <DressLoans api={api} apiBase={API_BASE} role={role} />}
+{page === "dresses" && <Dresses api={api} apiBase={API_BASE} role={role} mode="list" />}
+{page === "dresses_create" && <Dresses api={api} apiBase={API_BASE} role={role} mode="create" />}
+{page === "dresses_list" && <Dresses api={api} apiBase={API_BASE} role={role} mode="list" />}
 
-      {/* ✅ Los 3 reportes usan la misma página Reports, que decide qué mostrar */}
-      {page === "reports" && <Reports api={api} apiBase={API_BASE} role={role} />}
-      {page === "reports_stock" && <Reports api={api} apiBase={API_BASE} role={role} initial="stock" />}
-      {page === "reports_valuation" && <Reports api={api} apiBase={API_BASE} role={role} initial="valuation" />}
-      {page === "reports_movements" && <Reports api={api} apiBase={API_BASE} role={role} initial="movements" />}
+{page === "capsules" && <Capsules api={api} apiBase={API_BASE} role={role} />}
+
+{page === "fabrics" && <Fabrics api={api} apiBase={API_BASE} role={role} />}
+{page === "rolls" && <Rolls api={api} apiBase={API_BASE} role={role} />}
+{page === "movements" && <Movements api={api} apiBase={API_BASE} role={role} />}
+
+{page === "dress_loans" && <DressLoans api={api} apiBase={API_BASE} role={role} />}
+
+{page === "reports" && <Reports api={api} apiBase={API_BASE} role={role} />}
+{page === "reports_stock" && <Reports api={api} apiBase={API_BASE} role={role} initial="stock" />}
+{page === "reports_valuation" && <Reports api={api} apiBase={API_BASE} role={role} initial="valuation" />}
+{page === "reports_movements" && <Reports api={api} apiBase={API_BASE} role={role} initial="movements" />}
+
+{page === "users" && role === "ADMIN" && <Users api={api} apiBase={API_BASE} role={role} />}
+{page === "suppliers" && <Suppliers api={api} apiBase={API_BASE} role={role} />}
+
+{page === "customers" && (
+  <div className="card">
+    <h3>Clientes</h3>
+    <div className="page-sub">Próximamente.</div>
+  </div>
+)}
     </Layout>
   );
 }
