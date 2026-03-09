@@ -1,18 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 
+function getInitial(userLabel) {
+  if (!userLabel) return "U";
+  return String(userLabel).trim().charAt(0).toUpperCase();
+}
+
 export default function Layout({
   brandTitle,
   brandSubtitle,
   navItems,
   currentPage,
   onNavigate,
-  headerTitle,
-  headerSubtitle,
   userLabel,
   onLogout,
   children
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
 
   function go(pageKey) {
     onNavigate(pageKey);
@@ -28,44 +32,29 @@ export default function Layout({
   }, []);
 
   const dressesChildren = useMemo(() => {
-    const dressesItem = navItems.find((x) => x.key === "dresses");
-    return dressesItem?.children || [];
+    const item = navItems.find((x) => x.key === "dresses");
+    return item?.children || [];
   }, [navItems]);
 
   const fabricsChildren = useMemo(() => {
-    const fabricsItem = navItems.find((x) => x.key === "fabrics_group");
-    return fabricsItem?.children || [];
+    const item = navItems.find((x) => x.key === "fabrics_group");
+    return item?.children || [];
   }, [navItems]);
 
   const reportsChildren = useMemo(() => {
-    const reportsItem = navItems.find((x) => x.key === "reports");
-    return reportsItem?.children || [];
+    const item = navItems.find((x) => x.key === "reports");
+    return item?.children || [];
   }, [navItems]);
 
   const settingsChildren = useMemo(() => {
-    const settingsItem = navItems.find((x) => x.key === "settings");
-    return settingsItem?.children || [];
+    const item = navItems.find((x) => x.key === "settings");
+    return item?.children || [];
   }, [navItems]);
 
-  const isDressesSection = useMemo(() => {
-    if (currentPage === "dresses") return true;
-    return dressesChildren.some((c) => c.key === currentPage);
-  }, [currentPage, dressesChildren]);
-
-  const isFabricsSection = useMemo(() => {
-    if (currentPage === "fabrics_group") return true;
-    return fabricsChildren.some((c) => c.key === currentPage);
-  }, [currentPage, fabricsChildren]);
-
-  const isReportsSection = useMemo(() => {
-    if (currentPage === "reports") return true;
-    return reportsChildren.some((c) => c.key === currentPage);
-  }, [currentPage, reportsChildren]);
-
-  const isSettingsSection = useMemo(() => {
-    if (currentPage === "settings") return true;
-    return settingsChildren.some((c) => c.key === currentPage);
-  }, [currentPage, settingsChildren]);
+  const isDressesSection = currentPage === "dresses" || dressesChildren.some((c) => c.key === currentPage);
+  const isFabricsSection = currentPage === "fabrics_group" || fabricsChildren.some((c) => c.key === currentPage);
+  const isReportsSection = currentPage === "reports" || reportsChildren.some((c) => c.key === currentPage);
+  const isSettingsSection = currentPage === "settings" || settingsChildren.some((c) => c.key === currentPage);
 
   function renderNavItem(it) {
     const isGroup =
@@ -109,20 +98,17 @@ export default function Layout({
 
         {parentActive && (
           <div className="nav-sub">
-            {it.children.map((ch) => {
-              const childActive = currentPage === ch.key;
-              return (
-                <button
-                  key={ch.key}
-                  className={`nav-sub-btn ${childActive ? "active" : ""}`}
-                  onClick={() => go(ch.key)}
-                  type="button"
-                >
-                  <span className="nav-sub-dot" />
-                  <span className="nav-sub-label">{ch.label}</span>
-                </button>
-              );
-            })}
+            {it.children.map((ch) => (
+              <button
+                key={ch.key}
+                className={`nav-sub-btn ${currentPage === ch.key ? "active" : ""}`}
+                onClick={() => go(ch.key)}
+                type="button"
+              >
+                <span className="nav-sub-dot" />
+                <span className="nav-sub-label">{ch.label}</span>
+              </button>
+            ))}
           </div>
         )}
       </div>
@@ -138,15 +124,13 @@ export default function Layout({
           <div className="sidebar-logo">
             <img src="/dressflow-logo-black.png" alt="DressFlow" />
           </div>
-          <div>
+          <div className="brand-copy">
             <div className="brand-title">{brandTitle}</div>
             <div className="brand-sub">{brandSubtitle}</div>
           </div>
         </div>
 
-        <nav className="nav">
-          {navItems.map((it) => renderNavItem(it))}
-        </nav>
+        <nav className="nav">{navItems.map((it) => renderNavItem(it))}</nav>
       </aside>
 
       <main className="main">
@@ -171,17 +155,22 @@ export default function Layout({
           <div className="header-right">
             <div className="header-search">
               <span className="header-search-icon">⌕</span>
-              <input
-                className="header-search-input"
-                type="text"
-                placeholder="Buscar..."
-              />
+              <input className="header-search-input" type="text" placeholder="Buscar..." />
             </div>
 
             <div className="header-user">
               <div className="header-user-name">{userLabel}</div>
-              <div className="header-user-avatar">
-                <img src="/user-avatar.png" alt={userLabel || "Usuario"} />
+
+              <div className="header-user-avatar" aria-label={userLabel || "Usuario"}>
+                {!avatarError ? (
+                  <img
+                    src="/user-avatar.png"
+                    alt={userLabel || "Usuario"}
+                    onError={() => setAvatarError(true)}
+                  />
+                ) : (
+                  <span>{getInitial(userLabel)}</span>
+                )}
               </div>
             </div>
 
