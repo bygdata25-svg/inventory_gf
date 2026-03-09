@@ -184,7 +184,7 @@ export default function App() {
       currentPage={page}
       onNavigate={setPage}
       headerTitle={pageTitleMap[page] || t("app.title")}
-      headerSubtitle={t("app.subtitle")}
+      headerSubtitle="AI • FASHION • ERP"
       userLabel={username}
       roleLabel={role}
       onLogout={logout}
