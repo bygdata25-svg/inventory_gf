@@ -40,7 +40,7 @@ export default function Layout({
       <aside className="sidebar">
         <div className="brand">
           <div className="sidebar-logo">
-              <img src="/dressflow-logo.svg" alt="DressFlow" />
+              <img src="/dressflow-logo.png" alt="DressFlow" />
           </div>
           <div>
             <div className="brand-title">{brandTitle}</div>
