@@ -59,7 +59,7 @@ export default function Dashboard({ api, apiBase, username }) {
 
     const overdue = (alerts.overdue_top || []).map((x) => ({
       id: `overdue-${x.id}`,
-      title: `Préstamo vencido`,
+      title: "Préstamo vencido",
       subtitle: `${x.customer_name} · Vestido #${x.dress_id}`,
       when: new Date(x.due_at).toLocaleString("es-AR"),
       tone: "red"
@@ -67,7 +67,7 @@ export default function Dashboard({ api, apiBase, username }) {
 
     const dueSoon = (alerts.due_soon_top || []).map((x) => ({
       id: `soon-${x.id}`,
-      title: `Próximo vencimiento`,
+      title: "Próximo vencimiento",
       subtitle: `${x.customer_name} · Vestido #${x.dress_id}`,
       when: new Date(x.due_at).toLocaleString("es-AR"),
       tone: "yellow"
@@ -86,7 +86,7 @@ export default function Dashboard({ api, apiBase, username }) {
           <div className="df-hello">Hola, {username || "Usuario"} 👋</div>
           <div className="df-subtitle">Resumen de tu inventario</div>
         </div>
-
+      </div>
 
       <div className="df-kpi-grid">
         <DashboardKpiCard
@@ -94,26 +94,28 @@ export default function Dashboard({ api, apiBase, username }) {
           value={summary.available + summary.loaned + summary.sold + (summary.maintenance || 0)}
           subtitle={`${summary.available} disponibles`}
           icon="D"
-	/>
-	<DashboardKpiCard
-	  title="Préstamos"
-	  value={summary.loaned}
-	  subtitle="Activos"
-	  icon="P"
-	/>
-	<DashboardKpiCard
-	  title="Ventas del mes"
-	  value={summary.sales_month}
-	  subtitle={formatCurrency(summary.revenue_month)}
-	  icon="V"
-	/>
+        />
 
-	<DashboardKpiCard
-	  title="Promedio por venta"
-	  value={formatCurrency(summary.avg_sale_month)}
-	  subtitle="Ticket promedio"
-	  icon="$"
-	/>
+        <DashboardKpiCard
+          title="Préstamos"
+          value={summary.loaned}
+          subtitle="Activos"
+          icon="P"
+        />
+
+        <DashboardKpiCard
+          title="Ventas del mes"
+          value={summary.sales_month}
+          subtitle={formatCurrency(summary.revenue_month)}
+          icon="V"
+        />
+
+        <DashboardKpiCard
+          title="Promedio por venta"
+          value={formatCurrency(summary.avg_sale_month)}
+          subtitle="Ticket promedio"
+          icon="$"
+        />
       </div>
 
       <div className="df-main-grid">
@@ -265,19 +267,20 @@ export default function Dashboard({ api, apiBase, username }) {
           font-size: 14px;
         }
 
-	.df-kpi-icon{
-	  width:72px;
-	  height:72px;
-	  border-radius: 999px;
-	  display:flex;
-	  align-items:center;
-	  justify-content:center;
-	  background: rgba(231,154,138,.14);
-	  font-size: 28px;
-	  font-weight: 700;
-	  color: #7F4C58;
-	  flex: 0 0 72px;
-	}
+        .df-kpi-icon{
+          width:72px;
+          height:72px;
+          border-radius: 999px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          background: rgba(231,154,138,.14);
+          font-size: 28px;
+          font-weight: 700;
+          color: #7F4C58;
+          flex: 0 0 72px;
+        }
+
         .df-main-grid{
           display:grid;
           grid-template-columns: 1.1fr .9fr;
@@ -463,13 +466,6 @@ export default function Dashboard({ api, apiBase, username }) {
         }
 
         @media (max-width: 720px){
-          .df-search{
-            min-width: 100%;
-            width: 100%;
-          }
-          .df-search-wrap{
-            width: 100%;
-          }
           .df-kpi-grid{
             grid-template-columns: 1fr;
           }
@@ -483,6 +479,8 @@ export default function Dashboard({ api, apiBase, username }) {
       `}</style>
     </div>
   );
+}
+
 function DashboardKpiCard({ title, value, subtitle, icon }) {
   return (
     <div className="df-kpi-card">
