@@ -69,21 +69,35 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
     setError("");
 
     try {
-      const data = await api.request(`${apiBase}/api/dresses?page=1&page_size=1000`);
+      const data = await api.request(`${apiBase}/api/dresses?page=1&page_size=100`);
 
       if (Array.isArray(data)) {
         setAllItems(data);
       } else {
         setAllItems(Array.isArray(data?.items) ? data.items : []);
       }
-    } catch (e) {
-      console.error("Error loading dresses", e);
-      setError(e?.detail || t("ui.error"));
-      setAllItems([]);
-    } finally {
-      setLoading(false);
-    }
+} catch (e) {
+  console.error("Error loading dresses", e);
+
+  let message = t("ui.error");
+
+  if (typeof e?.detail === "string") {
+    message = e.detail;
+  } else if (Array.isArray(e?.detail)) {
+    message = e.detail.map((x) => x?.msg || JSON.stringify(x)).join(" | ");
+  } else if (e?.detail && typeof e.detail === "object") {
+    message = e.detail.msg || e.detail.message || JSON.stringify(e.detail);
+  } else if (typeof e?.message === "string") {
+    message = e.message;
+  } else {
+    message = JSON.stringify(e);
   }
+
+  setError(message);
+  setAllItems([]);
+} finally {
+  setLoading(false);
+}
 
   async function loadCapsules() {
     setLoadingCapsules(true);
