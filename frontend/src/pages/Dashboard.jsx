@@ -484,7 +484,6 @@ export default function Dashboard({ api, apiBase, username }) {
     </div>
   );
 }
-
 function DashboardKpiCard({ title, value, subtitle, icon }) {
   return (
     <div className="df-kpi-card">
@@ -493,6 +492,7 @@ function DashboardKpiCard({ title, value, subtitle, icon }) {
         <div className="df-kpi-value">{value}</div>
         <div className="df-kpi-sub">{subtitle}</div>
       </div>
+
       <div className="df-kpi-icon">{icon}</div>
     </div>
   );
@@ -506,6 +506,7 @@ function MiniAlertCard({ title, count, subtitle, variant }) {
           <div className="df-mini-alert-title">{title}</div>
           <div className="df-mini-alert-sub">{subtitle}</div>
         </div>
+
         <Badge variant={variant}>{count}</Badge>
       </div>
     </div>
@@ -558,7 +559,6 @@ function DonutChart({ data }) {
               strokeWidth="34"
               strokeDasharray={strokeDasharray}
               strokeDashoffset={strokeDashoffset}
-              strokeLinecap="butt"
             />
           );
         })}
