@@ -483,7 +483,6 @@ export default function Dashboard({ api, apiBase, username }) {
       `}</style>
     </div>
   );
-}
 function DashboardKpiCard({ title, value, subtitle, icon }) {
   return (
     <div className="df-kpi-card">
