@@ -10,7 +10,7 @@ from app.db.session import get_db
 from app.models.user import User
 from app.models.dress import Dress, DressStatus
 from app.models.capsule import Capsule
-from app.schemas.dress import DressCreate, DressOut, DressListOut
+from app.schemas.dress import DressCreate, DressOut, DressListOut, , DressUpdate
 from app.core.authz import get_current_user
 
 router = APIRouter(prefix="/api/dresses", tags=["Dresses"])
@@ -171,6 +171,37 @@ def update_dress_status(
         raise HTTPException(status_code=404, detail="Dress not found")
 
     dress.status = payload.status
+
+    db.commit()
+    db.refresh(dress)
+
+    result = DressOut.model_validate(dress)
+    result.capsule_name = dress.capsule.name if dress.capsule else None
+    return result
+
+@router.patch("/{dress_id}", response_model=DressOut)
+def update_dress(
+    dress_id: int,
+    payload: DressUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role != "ADMIN":
+        raise HTTPException(status_code=403, detail="Only admins can edit dresses")
+
+    dress = db.get(Dress, dress_id)
+    if not dress:
+        raise HTTPException(status_code=404, detail="Dress not found")
+
+    data = payload.model_dump(exclude_unset=True)
+
+    if "capsule_id" in data and data["capsule_id"] is not None:
+        capsule = db.get(Capsule, data["capsule_id"])
+        if not capsule:
+            raise HTTPException(status_code=404, detail="Capsule not found")
+
+    for key, value in data.items():
+        setattr(dress, key, value)
 
     db.commit()
     db.refresh(dress)

@@ -43,3 +43,9 @@ class DressListOut(BaseModel):
     page: int
     page_size: int
     pages: int
+
+class DressUpdate(BaseModel):
+    price: Optional[float] = None
+    capsule_id: Optional[int] = None
+    location: Optional[str] = None
+    notes: Optional[str] = None

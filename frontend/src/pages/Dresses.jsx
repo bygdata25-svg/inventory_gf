@@ -3,6 +3,7 @@ import Badge from "../components/Badge";
 import { dressStatusLabel } from "../utils/status";
 import { t } from "../i18n";
 import DressDetail from "./DressDetailPage";
+import { DRESS_LOCATIONS } from "../constants/dressLocations";
 
 function resolvePhoto(photoUrl) {
   if (!photoUrl) return null;
@@ -326,27 +327,38 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
               onChange={(e) => setForm({ ...form, code: e.target.value })}
               required
             />
+
             <input
               placeholder="Nombre"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
             />
+
             <input
               placeholder="Talle"
               value={form.size}
               onChange={(e) => setForm({ ...form, size: e.target.value })}
             />
+
             <input
               placeholder="Color"
               value={form.color}
               onChange={(e) => setForm({ ...form, color: e.target.value })}
             />
-            <input
-              placeholder="Ubicación"
+
+            <select
               value={form.location}
               onChange={(e) => setForm({ ...form, location: e.target.value })}
-            />
+            >
+              <option value="">Ubicación</option>
+              {DRESS_LOCATIONS.map((loc) => (
+                <option key={loc} value={loc}>
+                  {loc}
+                </option>
+              ))}
+            </select>
+
             <select
               value={form.capsule_id}
               onChange={(e) => setForm({ ...form, capsule_id: e.target.value })}
@@ -359,6 +371,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
                 </option>
               ))}
             </select>
+
             <input
               type="number"
               min="0"
@@ -367,18 +380,21 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
               value={form.price}
               onChange={(e) => setForm({ ...form, price: e.target.value })}
             />
+
             <input
               placeholder="Foto (URL o ruta relativa)"
               value={form.photo_url}
               onChange={(e) => setForm({ ...form, photo_url: e.target.value })}
               style={{ minWidth: 260 }}
             />
+
             <input
               placeholder="Notas"
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               style={{ minWidth: 240 }}
             />
+
             <button type="submit">{t("actions.create") || "Crear"}</button>
           </div>
 
@@ -393,42 +409,49 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
           <form onSubmit={applyFilters}>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <select
-                    value={filterForm.status}
-                    onChange={(e) => setFilterForm({ ...filterForm, status: e.target.value })}
-                    style={{ minWidth: 180 }}
-                  >
-                    <option value="">{t("ui.all") || "Todos los estados"}</option> 
-                    <option value="AVAILABLE">{dressStatusLabel("AVAILABLE")}</option>
-                    <option value="LOANED">{dressStatusLabel("LOANED")}</option>
-                    <option value="CLEANING">{dressStatusLabel("CLEANING")}</option>
-                    <option value="MAINTENANCE">{dressStatusLabel("MAINTENANCE")}</option>
-                    <option value="RETIRED">{dressStatusLabel("RETIRED")}</option>
-                    <option value="SOLD">{dressStatusLabel("SOLD")}</option>
-                  </select>
-
-                  <select
-                    value={filterForm.capsule_id}
-                    onChange={(e) => setFilterForm({ ...filterForm, capsule_id: e.target.value })}
-                    style={{ minWidth: 180 }}
-                  >
-                    <option value="">Todas las cápsulas</option>
-                    {capsules.map((capsule) => (
-                      <option key={capsule.id} value={capsule.id}>
-                        {capsule.name}
-                      </option>
-                    ))}
+                value={filterForm.status}
+                onChange={(e) => setFilterForm({ ...filterForm, status: e.target.value })}
+                style={{ minWidth: 180 }}
+              >
+                <option value="">Todos los estados</option>
+                <option value="AVAILABLE">{dressStatusLabel("AVAILABLE")}</option>
+                <option value="LOANED">{dressStatusLabel("LOANED")}</option>
+                <option value="CLEANING">{dressStatusLabel("CLEANING")}</option>
+                <option value="MAINTENANCE">{dressStatusLabel("MAINTENANCE")}</option>
+                <option value="RETIRED">{dressStatusLabel("RETIRED")}</option>
+                <option value="SOLD">{dressStatusLabel("SOLD")}</option>
               </select>
+
+              <select
+                value={filterForm.capsule_id}
+                onChange={(e) => setFilterForm({ ...filterForm, capsule_id: e.target.value })}
+                style={{ minWidth: 180 }}
+              >
+                <option value="">Todas las cápsulas</option>
+                {capsules.map((capsule) => (
+                  <option key={capsule.id} value={capsule.id}>
+                    {capsule.name}
+                  </option>
+                ))}
+              </select>
+
               <input
                 placeholder="Filtrar por color"
                 value={filterForm.color}
                 onChange={(e) => setFilterForm({ ...filterForm, color: e.target.value })}
               />
 
-              <input
-                placeholder="Filtrar por ubicación"
+              <select
                 value={filterForm.location}
                 onChange={(e) => setFilterForm({ ...filterForm, location: e.target.value })}
-              />
+              >
+                <option value="">Todas las ubicaciones</option>
+                {DRESS_LOCATIONS.map((loc) => (
+                  <option key={loc} value={loc}>
+                    {loc}
+                  </option>
+                ))}
+              </select>
 
               <input
                 type="number"

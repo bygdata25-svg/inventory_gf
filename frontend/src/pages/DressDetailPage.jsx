@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { dressStatusLabel } from "../utils/status";
+import { DRESS_LOCATIONS } from "../constants/dressLocations";
+
 
 function resolvePhoto(photoUrl) {
   if (!photoUrl) return null;
@@ -33,7 +35,7 @@ function formatPrice(value) {
   return `U$S ${n.toFixed(2)}`;
 }
 
-export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefresh }) {
+export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefresh, role }) {
   const [dress, setDress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -42,6 +44,36 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
   const [saleForm, setSaleForm] = useState(null);
   const [savingStatus, setSavingStatus] = useState(false);
 
+  const [capsules, setCapsules] = useState([]);
+  const [editing, setEditing] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editForm, setEditForm] = useState({
+    price: "",
+    capsule_id: "",
+    location: "",
+    notes: ""
+  });
+
+  const isAdmin = role === "ADMIN";
+
+  async function loadCapsules() {
+    try {
+      const data = await api.request(`${apiBase}/api/capsules`);
+      setCapsules(Array.isArray(data) ? data : []);
+    } catch {
+      setCapsules([]);
+    }
+  }
+
+  function syncEditForm(data) {
+    setEditForm({
+      price: data?.price ?? "",
+      capsule_id: data?.capsule_id ?? "",
+      location: data?.location ?? "",
+      notes: data?.notes ?? ""
+    });
+  }
+
   async function loadDetail() {
     setLoading(true);
     setErr("");
@@ -49,6 +81,7 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
     try {
       const data = await api.request(`${apiBase}/api/dresses/${dressId}`);
       setDress(data);
+      syncEditForm(data);
     } catch (e) {
       console.error("Dress detail error", e);
       setErr(e?.detail || e?.message || "No se pudo cargar el detalle del vestido");
@@ -66,7 +99,10 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
       setErr("");
       try {
         const data = await api.request(`${apiBase}/api/dresses/${dressId}`);
-        if (!cancelled) setDress(data);
+        if (!cancelled) {
+          setDress(data);
+          syncEditForm(data);
+        }
       } catch (e) {
         console.error("Dress detail error", e);
         if (!cancelled) {
@@ -82,6 +118,13 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
       cancelled = true;
     };
   }, [api, apiBase, dressId]);
+
+  useEffect(() => {
+    if (isAdmin) {
+      loadCapsules();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
 
   const imgSrc = useMemo(() => resolvePhoto(dress?.photo_url), [dress?.photo_url]);
 
@@ -100,6 +143,30 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
       alert(e?.detail || "No se pudo actualizar el estado");
     } finally {
       setSavingStatus(false);
+    }
+  }
+
+  async function saveEdit() {
+    setSavingEdit(true);
+    try {
+      await api.request(`${apiBase}/api/dresses/${dressId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          price: editForm.price === "" ? null : Number(editForm.price),
+          capsule_id: editForm.capsule_id === "" ? null : Number(editForm.capsule_id),
+          location: editForm.location || null,
+          notes: editForm.notes || null
+        })
+      });
+
+      setEditing(false);
+      await loadDetail();
+      if (onRefresh) onRefresh();
+    } catch (e) {
+      alert(e?.detail || "No se pudieron guardar los cambios");
+    } finally {
+      setSavingEdit(false);
     }
   }
 
@@ -144,6 +211,25 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
     }
   }
 
+  async function returnLoan() {
+    try {
+      const openLoan = await api.request(`${apiBase}/api/dress-loans/by-dress/${dressId}/open`);
+
+      await api.request(`${apiBase}/api/dress-loans/${openLoan.id}/return`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          returned_by: "Showroom"
+        })
+      });
+
+      await loadDetail();
+      if (onRefresh) onRefresh();
+    } catch (e) {
+      alert(e?.detail || "Error registrando devolución");
+    }
+  }
+
   if (loading) {
     return <div className="card">Cargando vestido...</div>;
   }
@@ -161,25 +247,6 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
     );
   }
 
-async function returnLoan() {
-  try {
-    const openLoan = await api.request(`${apiBase}/api/dress-loans/by-dress/${dressId}/open`);
-
-    await api.request(`${apiBase}/api/dress-loans/${openLoan.id}/return`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        returned_by: "Showroom"
-      })
-    });
-
-    await loadDetail();
-    if (onRefresh) onRefresh();
-  } catch (e) {
-    alert(e?.detail || "Error registrando devolución");
-  }
-}
-
   if (!dress) {
     return (
       <div>
@@ -191,9 +258,9 @@ async function returnLoan() {
     );
   }
 
-const isAvailable = dress.status === "AVAILABLE";
-const isLoaned = dress.status === "LOANED";
-const canReturnToAvailable = dress.status === "MAINTENANCE" || dress.status === "CLEANING";
+  const isAvailable = dress.status === "AVAILABLE";
+  const isLoaned = dress.status === "LOANED";
+  const canReturnToAvailable = dress.status === "MAINTENANCE" || dress.status === "CLEANING";
 
   return (
     <div>
@@ -206,6 +273,41 @@ const canReturnToAvailable = dress.status === "MAINTENANCE" || dress.status === 
           <button className="btn" onClick={loadDetail} type="button">
             Actualizar
           </button>
+
+          {isAdmin && !editing && (
+            <button
+              className="btn"
+              type="button"
+              onClick={() => setEditing(true)}
+            >
+              Editar
+            </button>
+          )}
+
+          {isAdmin && editing && (
+            <>
+              <button
+                className="btn btn-primary"
+                type="button"
+                disabled={savingEdit}
+                onClick={saveEdit}
+              >
+                Guardar cambios
+              </button>
+
+              <button
+                className="btn"
+                type="button"
+                disabled={savingEdit}
+                onClick={() => {
+                  setEditing(false);
+                  syncEditForm(dress);
+                }}
+              >
+                Cancelar
+              </button>
+            </>
+          )}
 
           {isAvailable && (
             <>
@@ -228,15 +330,7 @@ const canReturnToAvailable = dress.status === "MAINTENANCE" || dress.status === 
               >
                 Prestar
               </button>
-              {isLoaned && (
-              <button
-                className="btn btn-primary"
-                type="button"
-                onClick={returnLoan}
-              >
-                Registrar devolución
-              </button>
-            )}
+
               <button
                 className="btn"
                 type="button"
@@ -261,6 +355,16 @@ const canReturnToAvailable = dress.status === "MAINTENANCE" || dress.status === 
                 Taller
               </button>
             </>
+          )}
+
+          {isLoaned && (
+            <button
+              className="btn btn-primary"
+              type="button"
+              onClick={returnLoan}
+            >
+              Registrar devolución
+            </button>
           )}
 
           {canReturnToAvailable && (
@@ -303,24 +407,67 @@ const canReturnToAvailable = dress.status === "MAINTENANCE" || dress.status === 
           <div className="grid grid-2 dress-kpis">
             <div className="dress-kpi">
               <div className="dress-kpi-label">Precio</div>
-              <div className="dress-kpi-value">{formatPrice(dress.price)}</div>
+              {editing && isAdmin ? (
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={editForm.price}
+                  onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
+                />
+              ) : (
+                <div className="dress-kpi-value">{formatPrice(dress.price)}</div>
+              )}
             </div>
+
             <div className="dress-kpi">
               <div className="dress-kpi-label">Cápsula</div>
-              <div className="dress-kpi-value">{dress.capsule_name || "-"}</div>
+              {editing && isAdmin ? (
+                <select
+                  value={editForm.capsule_id}
+                  onChange={(e) => setEditForm({ ...editForm, capsule_id: e.target.value })}
+                >
+                  <option value="">Sin cápsula</option>
+                  {capsules.map((capsule) => (
+                    <option key={capsule.id} value={capsule.id}>
+                      {capsule.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="dress-kpi-value">{dress.capsule_name || "-"}</div>
+              )}
             </div>
+
             <div className="dress-kpi">
               <div className="dress-kpi-label">Talle</div>
               <div className="dress-kpi-value">{dress.size || "-"}</div>
             </div>
+
             <div className="dress-kpi">
               <div className="dress-kpi-label">Color</div>
               <div className="dress-kpi-value">{dress.color || "-"}</div>
             </div>
+
             <div className="dress-kpi">
               <div className="dress-kpi-label">Ubicación</div>
-              <div className="dress-kpi-value">{dress.location || "-"}</div>
+              {editing && isAdmin ? (
+                <select
+                  value={editForm.location}
+                  onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                >
+                  <option value="">Sin ubicación</option>
+                  {DRESS_LOCATIONS.map((loc) => (
+                    <option key={loc} value={loc}>
+                      {loc}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="dress-kpi-value">{dress.location || "-"}</div>
+              )}
             </div>
+
             <div className="dress-kpi">
               <div className="dress-kpi-label">Estado</div>
               <div className="dress-kpi-value">{dressStatusLabel(dress.status)}</div>
@@ -330,7 +477,17 @@ const canReturnToAvailable = dress.status === "MAINTENANCE" || dress.status === 
           <div className="dress-meta">
             <div className="dress-meta-row">
               <div className="dress-meta-label">Notas</div>
-              <div className="dress-meta-value dress-notes">{dress.notes || "-"}</div>
+              <div className="dress-meta-value dress-notes">
+                {editing && isAdmin ? (
+                  <textarea
+                    rows={4}
+                    value={editForm.notes}
+                    onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                  />
+                ) : (
+                  dress.notes || "-"
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -435,7 +592,7 @@ const canReturnToAvailable = dress.status === "MAINTENANCE" || dress.status === 
               <div className="modal-grid">
                 <input
                   type="number"
-                  min={0}
+                  min="0"
                   step="0.01"
                   placeholder="Precio de venta"
                   required
