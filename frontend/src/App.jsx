@@ -197,18 +197,17 @@ const pageTitleMap = {
   customers: "Clientes"
 };
   return (
-    <Layout
-      brandTitle="DRESSFLOW"
-      brandSubtitle="AI • FASHION • ERP"
-      navItems={navItems}
-      currentPage={page}
-      onNavigate={setPage}
-      headerTitle={pageTitleMap[page] || t("app.title")}
-      headerSubtitle="AI • FASHION • ERP"
-      userLabel={username}
-      roleLabel={role}
-      onLogout={logout}
-    >
+     <Layout
+       brandTitle="DRESSFLOW"
+       brandSubtitle="AI • FASHION • ERP"
+       navItems={navItems}
+       currentPage={page}
+       onNavigate={setPage}
+       headerTitle={pageTitleMap[page] || "DRESSFLOW"}
+       headerSubtitle="AI • FASHION • ERP"
+       userLabel={username}
+       onLogout={logout}
+     >
     {page === "dashboard" && (
   <Dashboard
     api={api}
