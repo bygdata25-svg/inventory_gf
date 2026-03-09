@@ -1,0 +1,75 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <defs>
+    <linearGradient id="outerGrad" x1="118" y1="72" x2="410" y2="420" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6C7178"/>
+      <stop offset="0.48" stop-color="#111316"/>
+      <stop offset="1" stop-color="#2C3138"/>
+    </linearGradient>
+
+    <linearGradient id="ribbonGrad" x1="145" y1="108" x2="330" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#111316"/>
+      <stop offset="0.45" stop-color="#444951"/>
+      <stop offset="1" stop-color="#020304"/>
+    </linearGradient>
+
+    <radialGradient id="shineGrad" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
+      gradientTransform="translate(226 182) rotate(33) scale(145 110)">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.58"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="shadow" x="50" y="40" width="380" height="430" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#000000" flood-opacity="0.20"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <!-- Outer D -->
+    <path d="M124 72
+             H214
+             C334 72 410 144 410 258
+             C410 378 328 440 214 440
+             H190
+             C177 440 168 437 160 431
+             C154 425 150 416 150 404
+             V107
+             C150 92 140 82 124 72 Z"
+          fill="url(#outerGrad)"/>
+
+    <!-- Center negative / right spine cut -->
+    <path d="M214 88
+             C306 88 360 148 360 234
+             C331 246 303 258 274 272
+             C238 290 202 316 184 352
+             C180 328 194 290 230 258
+             C251 240 282 223 334 199
+             C330 126 288 88 214 88 Z"
+          fill="#F5F3F1"/>
+
+    <!-- Inner ribbon -->
+    <path d="M124 72
+             C146 126 184 170 237 198
+             C272 216 308 224 338 213
+             C323 223 302 236 277 250
+             C234 274 194 308 170 351
+             C157 376 150 404 150 434
+             C117 408 102 361 102 287
+             V112
+             C102 94 109 81 124 72 Z"
+          fill="url(#ribbonGrad)"/>
+
+    <!-- Lower sweep -->
+    <path d="M216 438
+             C286 432 336 380 336 300
+             C336 271 332 246 326 222
+             C346 231 360 251 360 292
+             C360 402 292 456 216 456
+             H196
+             C188 456 184 454 184 450
+             C184 444 194 440 216 438 Z"
+          fill="#20252B"/>
+
+    <!-- Highlight -->
+    <ellipse cx="214" cy="182" rx="148" ry="98" fill="url(#shineGrad)"/>
+  </g>
+</svg>

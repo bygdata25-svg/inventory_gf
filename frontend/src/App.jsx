@@ -178,8 +178,8 @@ export default function App() {
 
   return (
     <Layout
-      brandTitle={t("app.title")}
-      brandSubtitle={t("app.subtitle")}
+      brandTitle="DRESSFLOW"
+      brandSubtitle="AI • FASHION • ERP"
       navItems={navItems}
       currentPage={page}
       onNavigate={setPage}
