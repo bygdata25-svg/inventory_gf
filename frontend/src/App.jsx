@@ -169,9 +169,6 @@ const navItems = [
     ]
   }
 ];
-  if (role === "ADMIN") {
-    navItems.push({ key: "users", label: t("nav.users"), icon: <IconUsers /> });
-  }
 
 const pageTitleMap = {
   dashboard: "Inicio",
@@ -220,7 +217,6 @@ const pageTitleMap = {
   />
 )}
 
-{page === "dresses" && <Dresses api={api} apiBase={API_BASE} role={role} mode="list" />}
 {page === "dresses_create" && <Dresses api={api} apiBase={API_BASE} role={role} mode="create" />}
 {page === "dresses_list" && <Dresses api={api} apiBase={API_BASE} role={role} mode="list" />}
 
