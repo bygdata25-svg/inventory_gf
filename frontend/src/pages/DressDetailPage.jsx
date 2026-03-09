@@ -162,29 +162,28 @@ async function saveEdit() {
     });
 
     setEditing(false);
-
     await loadDetail();
     if (onRefresh) onRefresh();
-
   } catch (e) {
+    console.error("saveEdit error:", e);
 
     let message = "No se pudieron guardar los cambios";
 
-    if (typeof e?.detail === "string") {
+    if (typeof e === "string") {
+      message = e;
+    } else if (typeof e?.detail === "string") {
       message = e.detail;
-
     } else if (Array.isArray(e?.detail)) {
-      message = e.detail.map(x => x?.msg || JSON.stringify(x)).join(" | ");
-
+      message = e.detail.map((x) => x?.msg || JSON.stringify(x)).join(" | ");
     } else if (e?.detail && typeof e.detail === "object") {
-      message = e.detail.msg || e.detail.message || JSON.stringify(e.detail);
-
+      message = JSON.stringify(e.detail, null, 2);
     } else if (typeof e?.message === "string") {
       message = e.message;
+    } else {
+      message = JSON.stringify(e, null, 2);
     }
 
     alert(message);
-
   } finally {
     setSavingEdit(false);
   }
