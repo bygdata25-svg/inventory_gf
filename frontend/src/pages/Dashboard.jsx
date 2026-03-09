@@ -25,34 +25,40 @@ export default function Dashboard({ api, apiBase, username }) {
     return () => clearInterval(id);
   }, []);
 
-  const inventoryData = useMemo(() => {
-    if (!summary) return [];
-    const available = Number(summary.available || 0);
-    const loaned = Number(summary.loaned || 0);
-    const maintenance = Number(summary.maintenance || 0);
-    const total = available + loaned + maintenance;
+  const available = Number(summary?.available || 0);
+  const loaned = Number(summary?.loaned || 0);
+  const sold = Number(summary?.sold || 0);
+  const maintenance = Number(summary?.maintenance || 0);
+  const salesMonth = Number(summary?.sales_month || 0);
+  const revenueMonth = Number(summary?.revenue_month || 0);
+  const avgSaleMonth = Number(summary?.avg_sale_month || 0);
 
+  const totalDresses = available + loaned + sold + maintenance;
+  const operationalTotal = available + loaned + maintenance;
+
+  const inventoryData = useMemo(() => {
+    const total = operationalTotal;
     return [
       {
         label: "Disponibles",
         value: available,
         percent: total > 0 ? Math.round((available / total) * 100) : 0,
-        color: "#E79A8A"
+        color: "#E39A8C"
       },
       {
         label: "Préstamos",
         value: loaned,
         percent: total > 0 ? Math.round((loaned / total) * 100) : 0,
-        color: "#B65D5A"
+        color: "#B76462"
       },
       {
-        label: "Mantenimiento",
+        label: "Taller",
         value: maintenance,
         percent: total > 0 ? Math.round((maintenance / total) * 100) : 0,
-        color: "#9A7A92"
+        color: "#8D7A92"
       }
     ];
-  }, [summary]);
+  }, [available, loaned, maintenance, operationalTotal]);
 
   const recentActivity = useMemo(() => {
     if (!alerts) return [];
@@ -67,10 +73,10 @@ export default function Dashboard({ api, apiBase, username }) {
 
     const dueSoon = (alerts.due_soon_top || []).map((x) => ({
       id: `soon-${x.id}`,
-      title: "Próximo vencimiento",
+      title: "Vence pronto",
       subtitle: `${x.customer_name} · Vestido #${x.dress_id}`,
       when: new Date(x.due_at).toLocaleString("es-AR"),
-      tone: "yellow"
+      tone: "amber"
     }));
 
     return [...overdue, ...dueSoon].slice(0, 6);
@@ -81,47 +87,62 @@ export default function Dashboard({ api, apiBase, username }) {
 
   return (
     <div className="df-dashboard">
-      <div className="df-hero">
+      <section className="df-hero">
         <div>
-          <div className="df-hello">Hola, {username || "Usuario"} 👋</div>
-          <div className="df-subtitle">Resumen de tu inventario</div>
+          <div className="df-hello">Hola, {username || "Usuario"} ✦</div>
+          <div className="df-subtitle">
+            Bienvenido a tu panel de control de DressFlow
+          </div>
         </div>
-      </div>
 
-      <div className="df-kpi-grid">
+        <div className="df-hero-chip">
+          <span className="df-hero-chip-dot" />
+          Actualización automática
+        </div>
+      </section>
+
+      <section className="df-kpi-grid">
         <DashboardKpiCard
           title="Vestidos"
-          value={summary.available + summary.loaned + summary.sold + (summary.maintenance || 0)}
-          subtitle={`${summary.available} disponibles`}
-          icon="D"
+          value={totalDresses}
+          subtitle={`${available} disponibles`}
+          icon={<IconDress />}
+          tone="rose"
         />
 
         <DashboardKpiCard
           title="Préstamos"
-          value={summary.loaned}
+          value={loaned}
           subtitle="Activos"
-          icon="P"
+          icon={<IconLoan />}
+          tone="plum"
         />
 
         <DashboardKpiCard
           title="Ventas del mes"
-          value={summary.sales_month}
-          subtitle={formatCurrency(summary.revenue_month)}
-          icon="V"
+          value={salesMonth}
+          subtitle={formatCurrency(revenueMonth)}
+          icon={<IconSales />}
+          tone="gold"
         />
 
         <DashboardKpiCard
           title="Promedio por venta"
-          value={formatCurrency(summary.avg_sale_month)}
+          value={formatCurrency(avgSaleMonth)}
           subtitle="Ticket promedio"
-          icon="$"
+          icon={<IconRevenue />}
+          tone="graphite"
         />
-      </div>
+      </section>
 
-      <div className="df-main-grid">
-        <div className="card df-panel">
-          <div className="df-panel-title">Actividad reciente</div>
-          <div className="df-panel-sub">Últimos eventos del sistema</div>
+      <section className="df-main-grid">
+        <div className="df-panel df-panel-large">
+          <div className="df-panel-header">
+            <div>
+              <div className="df-panel-title">Actividad reciente</div>
+              <div className="df-panel-sub">Eventos relevantes del sistema</div>
+            </div>
+          </div>
 
           <div className="df-activity-list">
             {recentActivity.length > 0 ? (
@@ -136,18 +157,22 @@ export default function Dashboard({ api, apiBase, username }) {
                 </div>
               ))
             ) : (
-              <div style={{ opacity: 0.7 }}>Todavía no hay actividad reciente.</div>
+              <div className="df-empty">Todavía no hay actividad reciente.</div>
             )}
           </div>
         </div>
 
-        <div className="card df-panel">
-          <div className="df-panel-title">Estado del inventario</div>
-          <div className="df-panel-sub">Distribución actual de vestidos</div>
+        <div className="df-panel">
+          <div className="df-panel-header">
+            <div>
+              <div className="df-panel-title">Estado del inventario</div>
+              <div className="df-panel-sub">Vestidos operativos actuales</div>
+            </div>
+          </div>
 
           <div className="df-inventory-wrap">
             <div className="df-donut">
-              <DonutChart data={inventoryData} />
+              <DonutChart data={inventoryData} total={operationalTotal} />
             </div>
 
             <div className="df-legend">
@@ -160,18 +185,25 @@ export default function Dashboard({ api, apiBase, username }) {
                     />
                     <span>{item.label}</span>
                   </div>
-                  <strong>{item.percent}%</strong>
+                  <div className="df-legend-right">
+                    <strong>{item.value}</strong>
+                    <span>{item.percent}%</span>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="df-bottom-grid">
-        <div className="card df-panel">
-          <div className="df-panel-title">Alertas</div>
-          <div className="df-panel-sub">Revisá devoluciones y vencimientos</div>
+      <section className="df-bottom-grid">
+        <div className="df-panel">
+          <div className="df-panel-header">
+            <div>
+              <div className="df-panel-title">Alertas</div>
+              <div className="df-panel-sub">Seguimiento de devoluciones</div>
+            </div>
+          </div>
 
           <div className="df-alert-grid">
             <MiniAlertCard
@@ -185,23 +217,27 @@ export default function Dashboard({ api, apiBase, username }) {
               title="Vencen pronto"
               count={alerts.due_soon_count}
               variant={alerts.due_soon_count > 0 ? "yellow" : "default"}
-              subtitle={alerts.due_soon_count > 0 ? "Próximas 48h" : "Sin próximos vencimientos"}
+              subtitle={alerts.due_soon_count > 0 ? "Próximas 48h" : "Sin alertas"}
             />
           </div>
         </div>
 
-        <div className="card df-panel">
-          <div className="df-panel-title">Resumen comercial</div>
-          <div className="df-panel-sub">Indicadores del período actual</div>
+        <div className="df-panel">
+          <div className="df-panel-header">
+            <div>
+              <div className="df-panel-title">Resumen comercial</div>
+              <div className="df-panel-sub">Indicadores del período actual</div>
+            </div>
+          </div>
 
           <div className="df-summary-list">
-            <SummaryRow label="Vendidos" value={summary.sold} />
-            <SummaryRow label="Ventas del mes" value={summary.sales_month} />
-            <SummaryRow label="Facturación" value={formatCurrency(summary.revenue_month)} />
-            <SummaryRow label="Promedio por venta" value={formatCurrency(summary.avg_sale_month)} />
+            <SummaryRow label="Vendidos" value={sold} />
+            <SummaryRow label="Ventas del mes" value={salesMonth} />
+            <SummaryRow label="Facturación" value={formatCurrency(revenueMonth)} />
+            <SummaryRow label="Promedio por venta" value={formatCurrency(avgSaleMonth)} />
           </div>
         </div>
-      </div>
+      </section>
 
       <style>{`
         .df-dashboard{
@@ -211,22 +247,45 @@ export default function Dashboard({ api, apiBase, username }) {
 
         .df-hero{
           display:flex;
-          align-items:center;
+          align-items:flex-start;
           justify-content:space-between;
           gap:16px;
           flex-wrap:wrap;
         }
 
         .df-hello{
-          font-size: 26px;
+          font-size: 28px;
           font-weight: 800;
-          color: #20192A;
+          color: #211927;
+          letter-spacing: -0.02em;
         }
 
         .df-subtitle{
-          margin-top: 4px;
+          margin-top: 6px;
           font-size: 15px;
+          color: rgba(17,17,17,.62);
+        }
+
+        .df-hero-chip{
+          display:inline-flex;
+          align-items:center;
+          gap:10px;
+          padding: 10px 14px;
+          border-radius: 999px;
+          background: rgba(255,255,255,.75);
+          border: 1px solid rgba(17,17,17,.06);
+          box-shadow: 0 8px 18px rgba(17,17,17,.05);
           color: rgba(17,17,17,.68);
+          font-size: 13px;
+          font-weight: 600;
+        }
+
+        .df-hero-chip-dot{
+          width:8px;
+          height:8px;
+          border-radius:999px;
+          background:#C8936B;
+          display:inline-block;
         }
 
         .df-kpi-grid{
@@ -236,54 +295,78 @@ export default function Dashboard({ api, apiBase, username }) {
         }
 
         .df-kpi-card{
-          background: rgba(255,255,255,.74);
-          border-radius: 24px;
+          position:relative;
+          overflow:hidden;
+          border-radius: 26px;
           border: 1px solid rgba(17,17,17,.05);
-          box-shadow: 0 10px 24px rgba(17,17,17,.06);
-          padding: 20px;
+          box-shadow: 0 12px 26px rgba(17,17,17,.06);
+          padding: 22px;
           display:flex;
           align-items:center;
           justify-content:space-between;
-          gap:14px;
+          gap:16px;
+          background: rgba(255,255,255,.78);
+          backdrop-filter: blur(10px);
         }
+
+        .df-kpi-card::after{
+          content:"";
+          position:absolute;
+          inset:auto -30px -30px auto;
+          width:120px;
+          height:120px;
+          border-radius:999px;
+          opacity:.16;
+          pointer-events:none;
+        }
+
+        .df-kpi-card.rose::after{ background:#E9B0A5; }
+        .df-kpi-card.plum::after{ background:#C8B0D0; }
+        .df-kpi-card.gold::after{ background:#E7C58F; }
+        .df-kpi-card.graphite::after{ background:#A9B0B8; }
 
         .df-kpi-title{
           font-size: 15px;
           font-weight: 700;
-          color: #21192A;
+          color: #231A2B;
         }
 
         .df-kpi-value{
           font-size: 34px;
           font-weight: 800;
-          margin-top: 6px;
+          margin-top: 8px;
           color: #20192A;
-          line-height: 1.1;
+          line-height: 1.06;
+          letter-spacing: -0.03em;
         }
 
         .df-kpi-sub{
-          margin-top: 4px;
-          color: rgba(17,17,17,.65);
+          margin-top: 6px;
+          color: rgba(17,17,17,.62);
           font-size: 14px;
         }
 
         .df-kpi-icon{
-          width:72px;
-          height:72px;
-          border-radius: 999px;
+          width:74px;
+          height:74px;
+          border-radius: 22px;
           display:flex;
           align-items:center;
           justify-content:center;
-          background: rgba(231,154,138,.14);
-          font-size: 28px;
-          font-weight: 700;
-          color: #7F4C58;
-          flex: 0 0 72px;
+          flex: 0 0 74px;
+          color: #6E434B;
+          background: linear-gradient(135deg, rgba(255,255,255,.95), rgba(236,223,219,.9));
+          border: 1px solid rgba(17,17,17,.05);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
         }
+
+        .df-kpi-card.plum .df-kpi-icon{ color:#6A4C73; }
+        .df-kpi-card.gold .df-kpi-icon{ color:#8D6840; }
+        .df-kpi-card.graphite .df-kpi-icon{ color:#48525B; }
 
         .df-main-grid{
           display:grid;
-          grid-template-columns: 1.1fr .9fr;
+          grid-template-columns: 1.15fr .85fr;
           gap:16px;
         }
 
@@ -294,24 +377,37 @@ export default function Dashboard({ api, apiBase, username }) {
         }
 
         .df-panel{
-          border-radius: 26px;
-          padding: 20px;
-          background: rgba(255,255,255,.76);
+          border-radius: 28px;
+          padding: 22px;
+          background: rgba(255,255,255,.80);
+          backdrop-filter: blur(12px);
           border: 1px solid rgba(17,17,17,.05);
-          box-shadow: 0 10px 24px rgba(17,17,17,.06);
+          box-shadow: 0 12px 26px rgba(17,17,17,.06);
+        }
+
+        .df-panel-large{
+          min-height: 360px;
+        }
+
+        .df-panel-header{
+          display:flex;
+          align-items:flex-start;
+          justify-content:space-between;
+          gap:14px;
+          margin-bottom: 14px;
         }
 
         .df-panel-title{
           font-size: 18px;
           font-weight: 800;
-          color: #20192A;
+          color: #22192B;
+          letter-spacing: -0.02em;
         }
 
         .df-panel-sub{
           font-size: 14px;
-          color: rgba(17,17,17,.58);
+          color: rgba(17,17,17,.56);
           margin-top: 4px;
-          margin-bottom: 14px;
         }
 
         .df-activity-list{
@@ -324,9 +420,9 @@ export default function Dashboard({ api, apiBase, username }) {
           grid-template-columns: 12px 1fr auto;
           gap:12px;
           align-items:center;
-          padding: 12px 10px;
-          border-radius: 16px;
-          background: rgba(255,255,255,.56);
+          padding: 13px 12px;
+          border-radius: 18px;
+          background: rgba(255,255,255,.66);
           border: 1px solid rgba(17,17,17,.05);
         }
 
@@ -336,23 +432,23 @@ export default function Dashboard({ api, apiBase, username }) {
           border-radius: 999px;
         }
 
-        .df-activity-dot.red{ background:#D78686; }
-        .df-activity-dot.yellow{ background:#D9B07A; }
+        .df-activity-dot.red{ background:#D68B8B; }
+        .df-activity-dot.amber{ background:#D8B077; }
 
         .df-activity-title{
           font-weight: 700;
-          color:#241C2C;
+          color:#251D2D;
         }
 
         .df-activity-subtitle{
           font-size: 13px;
           color: rgba(17,17,17,.62);
-          margin-top: 2px;
+          margin-top: 3px;
         }
 
         .df-activity-time{
-          font-size: 13px;
-          color: rgba(17,17,17,.58);
+          font-size: 12px;
+          color: rgba(17,17,17,.54);
           white-space: nowrap;
         }
 
@@ -371,7 +467,7 @@ export default function Dashboard({ api, apiBase, username }) {
 
         .df-legend{
           display:grid;
-          gap:14px;
+          gap:12px;
         }
 
         .df-legend-row{
@@ -379,8 +475,14 @@ export default function Dashboard({ api, apiBase, username }) {
           align-items:center;
           justify-content:space-between;
           gap:14px;
-          font-size:16px;
+          font-size:15px;
           color:#241C2C;
+          padding: 10px 0;
+          border-bottom: 1px solid rgba(17,17,17,.05);
+        }
+
+        .df-legend-row:last-child{
+          border-bottom:none;
         }
 
         .df-legend-left{
@@ -389,9 +491,25 @@ export default function Dashboard({ api, apiBase, username }) {
           gap:12px;
         }
 
+        .df-legend-right{
+          display:flex;
+          align-items:center;
+          gap:10px;
+        }
+
+        .df-legend-right strong{
+          min-width: 24px;
+          text-align:right;
+        }
+
+        .df-legend-right span{
+          color: rgba(17,17,17,.55);
+          font-size: 13px;
+        }
+
         .df-legend-color{
-          width:16px;
-          height:16px;
+          width:14px;
+          height:14px;
           border-radius:999px;
           display:inline-block;
         }
@@ -403,10 +521,10 @@ export default function Dashboard({ api, apiBase, username }) {
         }
 
         .df-mini-alert{
-          border-radius: 18px;
-          padding: 16px;
-          border: 1px solid rgba(17,17,17,.06);
-          background: rgba(255,255,255,.64);
+          border-radius: 20px;
+          padding: 18px;
+          border: 1px solid rgba(17,17,17,.05);
+          background: rgba(255,255,255,.62);
         }
 
         .df-mini-alert-title{
@@ -417,20 +535,20 @@ export default function Dashboard({ api, apiBase, username }) {
 
         .df-mini-alert-sub{
           font-size: 13px;
-          color: rgba(17,17,17,.6);
+          color: rgba(17,17,17,.58);
           margin-top: 4px;
         }
 
         .df-mini-alert-top{
           display:flex;
-          align-items:center;
+          align-items:flex-start;
           justify-content:space-between;
           gap:10px;
         }
 
         .df-summary-list{
           display:grid;
-          gap:12px;
+          gap:8px;
         }
 
         .df-summary-row{
@@ -438,8 +556,8 @@ export default function Dashboard({ api, apiBase, username }) {
           align-items:center;
           justify-content:space-between;
           gap:16px;
-          padding: 10px 0;
-          border-bottom: 1px solid rgba(17,17,17,.06);
+          padding: 12px 0;
+          border-bottom: 1px solid rgba(17,17,17,.05);
         }
 
         .df-summary-row:last-child{
@@ -447,18 +565,24 @@ export default function Dashboard({ api, apiBase, username }) {
         }
 
         .df-summary-label{
-          color: rgba(17,17,17,.68);
+          color: rgba(17,17,17,.66);
         }
 
         .df-summary-value{
           font-weight: 800;
-          color:#20192A;
+          color:#22192B;
+        }
+
+        .df-empty{
+          opacity: .7;
+          padding: 10px 0;
         }
 
         @media (max-width: 1200px){
           .df-kpi-grid{
             grid-template-columns: repeat(2, minmax(0,1fr));
           }
+
           .df-main-grid,
           .df-bottom-grid{
             grid-template-columns: 1fr;
@@ -469,11 +593,21 @@ export default function Dashboard({ api, apiBase, username }) {
           .df-kpi-grid{
             grid-template-columns: 1fr;
           }
+
           .df-inventory-wrap{
             grid-template-columns: 1fr;
           }
+
           .df-alert-grid{
             grid-template-columns: 1fr;
+          }
+
+          .df-activity-item{
+            grid-template-columns: 12px 1fr;
+          }
+
+          .df-activity-time{
+            grid-column: 2;
           }
         }
       `}</style>
@@ -481,9 +615,9 @@ export default function Dashboard({ api, apiBase, username }) {
   );
 }
 
-function DashboardKpiCard({ title, value, subtitle, icon }) {
+function DashboardKpiCard({ title, value, subtitle, icon, tone }) {
   return (
-    <div className="df-kpi-card">
+    <div className={`df-kpi-card ${tone || ""}`}>
       <div>
         <div className="df-kpi-title">{title}</div>
         <div className="df-kpi-value">{value}</div>
@@ -519,13 +653,14 @@ function SummaryRow({ label, value }) {
   );
 }
 
-function DonutChart({ data }) {
-  const total = data.reduce((acc, item) => acc + item.value, 0);
+function DonutChart({ data, total }) {
+  const safeTotal = total || 0;
 
-  if (!total) {
+  if (!safeTotal) {
     return (
       <svg width="220" height="220" viewBox="0 0 220 220">
-        <circle cx="110" cy="110" r="70" fill="none" stroke="rgba(0,0,0,.08)" strokeWidth="34" />
+        <circle cx="110" cy="110" r="70" fill="none" stroke="rgba(0,0,0,.08)" strokeWidth="30" />
+        <circle cx="110" cy="110" r="46" fill="#F7F3EE" />
       </svg>
     );
   }
@@ -536,9 +671,15 @@ function DonutChart({ data }) {
 
   return (
     <svg width="220" height="220" viewBox="0 0 220 220">
-      <g transform="rotate(-90 110 110)">
+      <defs>
+        <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="6" stdDeviation="8" floodColor="#000000" floodOpacity="0.10" />
+        </filter>
+      </defs>
+
+      <g transform="rotate(-90 110 110)" filter="url(#softShadow)">
         {data.map((item) => {
-          const fraction = item.value / total;
+          const fraction = item.value / safeTotal;
           const dash = fraction * circumference;
           const gap = circumference - dash;
           const strokeDasharray = `${dash} ${gap}`;
@@ -553,15 +694,61 @@ function DonutChart({ data }) {
               r={radius}
               fill="none"
               stroke={item.color}
-              strokeWidth="34"
+              strokeWidth="30"
               strokeDasharray={strokeDasharray}
               strokeDashoffset={strokeDashoffset}
+              strokeLinecap="round"
             />
           );
         })}
       </g>
 
-      <circle cx="110" cy="110" r="42" fill="#F7F3EE" />
+      <circle cx="110" cy="110" r="46" fill="#F7F3EE" />
+      <text x="110" y="103" textAnchor="middle" fontSize="15" fill="rgba(17,17,17,.55)">
+        Total
+      </text>
+      <text x="110" y="126" textAnchor="middle" fontSize="24" fontWeight="800" fill="#22192B">
+        {safeTotal}
+      </text>
+    </svg>
+  );
+}
+
+function IconDress() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9.5 3L8 6l2 2-3 12h10l-3-12 2-2-1.5-3z" />
+      <path d="M10 8h4" />
+    </svg>
+  );
+}
+
+function IconLoan() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="7" width="16" height="10" rx="2" />
+      <path d="M8 7V5h8v2" />
+      <path d="M12 10v4" />
+      <path d="M10 12h4" />
+    </svg>
+  );
+}
+
+function IconSales() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="8" />
+      <path d="M9 12h6" />
+      <path d="M12 9v6" />
+    </svg>
+  );
+}
+
+function IconRevenue() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 16l5-5 4 4 7-7" />
+      <path d="M14 8h6v6" />
     </svg>
   );
 }
