@@ -769,7 +769,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
           </div>
         </div>
       )}
-}
+
       <style>{`
         .dress-row:hover td{
           background: rgba(17,17,17,.02);
