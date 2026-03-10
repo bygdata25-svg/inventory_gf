@@ -137,10 +137,14 @@ export default function Layout({
 
           <div className="brand-copy">
             <div className="brand-title">
-              <span className="brand-title-strong">DRESS</span>
-              <span className="brand-title-light">FLOW</span>
+              <span className="brand-title-strong">{brandTitle || "DRESS"}</span>
+              <span className="brand-title-light">
+                {brandTitle ? "" : "FLOW"}
+              </span>
+              {brandTitle === "DRESSFLOW" ? "" : null}
             </div>
-            <div className="brand-sub">AI • FASHION • ERP</div>
+
+            <div className="brand-sub">{brandSubtitle || "AI • FASHION • ERP"}</div>
           </div>
         </div>
 
@@ -148,63 +152,46 @@ export default function Layout({
       </aside>
 
       <main className="main">
-          <header
-	    className="header"
-	    style={{
-	    minHeight: 72,
-	    overflow: "hidden"
-	  }}
-	  >
-          <div className="header-left">
-            <button
-              className="btn btn-icon hamburger"
-              type="button"
-              onClick={() => setSidebarOpen((v) => !v)}
-              aria-label="Menu"
-              title="Menu"
-            >
-              ☰
-            </button>
-	 <div
-	   className="header-brand-logo"
-	   style={{
-	     height: 44,
-	     display: "flex",
-	     alignItems: "center",
-	     overflow: "hidden"
-	   }}
-	 >
-	   <img
-	     src="/dressflow_topbar_logo_optical.png"
-	     alt="DressFlow"
-	     style={{
-	       height: 44,
-	       width: "auto",
-	       maxWidth: 320,
-	       display: "block",
-	       objectFit: "contain"
-	     }}
-	   />
-	 </div>
-         </div>
+        <header className="topbar">
+          <button
+            className="btn btn-icon hamburger"
+            type="button"
+            onClick={() => setSidebarOpen((v) => !v)}
+            aria-label="Menu"
+            title="Menu"
+          >
+            ☰
+          </button>
 
-          <div className="header-right">
-            <div className="header-search">
-              <span className="header-search-icon">⌕</span>
+          <img
+            src="/dressflow_topbar_logo_optical.png"
+            alt="DressFlow"
+            className="topbar-logo"
+          />
+        </header>
+
+        <div className="page-header">
+          <div className="page-header-left">
+            <h1 className="page-title">Hola, {userLabel} ✦</h1>
+            <div className="page-subtitle">
+              Bienvenido a tu panel de control de DressFlow
+            </div>
+          </div>
+
+          <div className="page-header-right">
+            <div className="page-search">
+              <span className="page-search-icon">⌕</span>
               <input
-                className="header-search-input"
+                className="page-search-input"
                 type="text"
                 placeholder="Buscar..."
               />
             </div>
 
-            <div className="header-user">
-              <div className="header-user-name">{userLabel}</div>
+            <div className="page-user">
+              <span className="page-user-name">{userLabel}</span>
 
-              <div
-                className="header-user-avatar"
-                aria-label={userLabel || "Usuario"}
-              >
+              <div className="page-avatar" aria-label={userLabel || "Usuario"}>
                 {!avatarError ? (
                   <img
                     src="/user-avatar.png"
@@ -218,15 +205,16 @@ export default function Layout({
             </div>
 
             <button
-              className="btn btn-icon"
+              className="btn btn-icon logout-btn"
               onClick={onLogout}
               type="button"
               title="Salir"
+              aria-label="Salir"
             >
               ⎋
             </button>
           </div>
-        </header>
+        </div>
 
         <div className="content">{children}</div>
       </main>
