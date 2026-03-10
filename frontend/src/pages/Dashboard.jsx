@@ -88,13 +88,6 @@ export default function Dashboard({ api, apiBase, username }) {
   return (
     <div className="df-dashboard">
       <section className="df-hero">
-        <div>
-          <div className="df-hello">Hola, {username || "Usuario"} ✦</div>
-          <div className="df-subtitle">
-            Bienvenido a tu panel de control de DressFlow
-          </div>
-        </div>
-
         <div className="df-hero-chip">
           <span className="df-hero-chip-dot" />
           Actualización automática
@@ -247,24 +240,9 @@ export default function Dashboard({ api, apiBase, username }) {
 
         .df-hero{
           display:flex;
-          align-items:flex-start;
-          justify-content:space-between;
-          gap:16px;
-          flex-wrap:wrap;
-        }
-
-        .df-hello{
-          font-size: 28px;
-          font-weight: 800;
-          color: #211927;
-          letter-spacing: -0.02em;
-        }
-
-        .df-subtitle{
-          margin-top: 6px;
-          font-size: 15px;
-          color: rgba(17,17,17,.62);
-        }
+          justify-content:flex-end;
+          margin-top: 4px;
+        } 
 
         .df-hero-chip{
           display:inline-flex;
