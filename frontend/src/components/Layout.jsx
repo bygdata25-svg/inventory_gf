@@ -150,74 +150,66 @@ export default function Layout({
 
         <nav className="nav">{navItems.map((it) => renderNavItem(it))}</nav>
       </aside>
+        <main className="main">
+  <header className="topbar">
+    <img
+      src="/dressflow_topbar_logo_optical.png"
+      alt="DressFlow"
+      className="topbar-logo"
+    />
+  </header>
 
-      <main className="main">
-        <header className="topbar">
-          <button
-            className="btn btn-icon hamburger"
-            type="button"
-            onClick={() => setSidebarOpen((v) => !v)}
-            aria-label="Menu"
-            title="Menu"
-          >
-            ☰
-          </button>
+  <section className="page-header">
+    <div className="page-header-row">
+      <div className="page-header-left">
+        <h1 className="page-title">Hola, {userLabel} ✦</h1>
+      </div>
 
-          <img
-            src="/dressflow_topbar_logo_optical.png"
-            alt="DressFlow"
-            className="topbar-logo"
+      <div className="page-header-right">
+        <div className="page-search">
+          <span className="page-search-icon">⌕</span>
+          <input
+            className="page-search-input"
+            type="text"
+            placeholder="Buscar..."
           />
-        </header>
+        </div>
 
-        <div className="page-header">
-          <div className="page-header-left">
-            <h1 className="page-title">Hola, {userLabel} ✦</h1>
-            <div className="page-subtitle">
-              Bienvenido a tu panel de control de DressFlow
-            </div>
-          </div>
+        <div className="page-user">
+          <span className="page-user-name">{userLabel}</span>
 
-          <div className="page-header-right">
-            <div className="page-search">
-              <span className="page-search-icon">⌕</span>
-              <input
-                className="page-search-input"
-                type="text"
-                placeholder="Buscar..."
+          <div className="page-avatar" aria-label={userLabel || "Usuario"}>
+            {!avatarError ? (
+              <img
+                src="/user-avatar.png"
+                alt={userLabel || "Usuario"}
+                onError={() => setAvatarError(true)}
               />
-            </div>
-
-            <div className="page-user">
-              <span className="page-user-name">{userLabel}</span>
-
-              <div className="page-avatar" aria-label={userLabel || "Usuario"}>
-                {!avatarError ? (
-                  <img
-                    src="/user-avatar.png"
-                    alt={userLabel || "Usuario"}
-                    onError={() => setAvatarError(true)}
-                  />
-                ) : (
-                  <span>{getInitial(userLabel)}</span>
-                )}
-              </div>
-            </div>
-
-            <button
-              className="btn btn-icon logout-btn"
-              onClick={onLogout}
-              type="button"
-              title="Salir"
-              aria-label="Salir"
-            >
-              ⎋
-            </button>
+            ) : (
+              <span>{getInitial(userLabel)}</span>
+            )}
           </div>
         </div>
 
-        <div className="content">{children}</div>
-      </main>
+        <button
+          className="btn btn-icon logout-btn"
+          onClick={onLogout}
+          type="button"
+          title="Salir"
+          aria-label="Salir"
+        >
+          ⎋
+        </button>
+      </div>
+    </div>
+
+    <div className="page-subtitle">
+      Bienvenido a tu panel de control de DressFlow
+    </div>
+  </section>
+
+  <div className="content">{children}</div>
+</main>
     </div>
   );
 }
