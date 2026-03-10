@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import Badge from "../components/Badge";
 import { formatCurrency } from "../utils/currency";
 
-export default function Dashboard({ api, apiBase, username }) {
+export default function Dashboard({ api, apiBase }) {
   const [summary, setSummary] = useState(null);
   const [alerts, setAlerts] = useState(null);
   const [error, setError] = useState("");
@@ -83,10 +83,10 @@ export default function Dashboard({ api, apiBase, username }) {
   }, [alerts]);
 
   if (error) return <div className="alert alert-error">{String(error)}</div>;
-  if (!summary || !alerts) return <div>Cargando métricas...</div>;
+  if (!summary || !alerts) return <DashboardLoading />;
 
   return (
-    <div className="df-dashboard">
+    <div className="df-dashboard-premium">
       <section className="df-hero">
         <div className="df-hero-chip">
           <span className="df-hero-chip-dot" />
@@ -132,6 +132,7 @@ export default function Dashboard({ api, apiBase, username }) {
         <div className="df-panel df-panel-large">
           <div className="df-panel-header">
             <div>
+              <div className="df-panel-eyebrow">Timeline</div>
               <div className="df-panel-title">Actividad reciente</div>
               <div className="df-panel-sub">Eventos relevantes del sistema</div>
             </div>
@@ -139,8 +140,12 @@ export default function Dashboard({ api, apiBase, username }) {
 
           <div className="df-activity-list">
             {recentActivity.length > 0 ? (
-              recentActivity.map((item) => (
-                <div key={item.id} className="df-activity-item">
+              recentActivity.map((item, idx) => (
+                <div
+                  key={item.id}
+                  className="df-activity-item"
+                  style={{ animationDelay: `${idx * 60}ms` }}
+                >
                   <div className={`df-activity-dot ${item.tone}`} />
                   <div className="df-activity-body">
                     <div className="df-activity-title">{item.title}</div>
@@ -158,6 +163,7 @@ export default function Dashboard({ api, apiBase, username }) {
         <div className="df-panel">
           <div className="df-panel-header">
             <div>
+              <div className="df-panel-eyebrow">Inventory</div>
               <div className="df-panel-title">Estado del inventario</div>
               <div className="df-panel-sub">Vestidos operativos actuales</div>
             </div>
@@ -193,6 +199,7 @@ export default function Dashboard({ api, apiBase, username }) {
         <div className="df-panel">
           <div className="df-panel-header">
             <div>
+              <div className="df-panel-eyebrow">Alerts</div>
               <div className="df-panel-title">Alertas</div>
               <div className="df-panel-sub">Seguimiento de devoluciones</div>
             </div>
@@ -218,6 +225,7 @@ export default function Dashboard({ api, apiBase, username }) {
         <div className="df-panel">
           <div className="df-panel-header">
             <div>
+              <div className="df-panel-eyebrow">Business</div>
               <div className="df-panel-title">Resumen comercial</div>
               <div className="df-panel-sub">Indicadores del período actual</div>
             </div>
@@ -233,7 +241,7 @@ export default function Dashboard({ api, apiBase, username }) {
       </section>
 
       <style>{`
-        .df-dashboard{
+        .df-dashboard-premium{
           display:grid;
           gap:18px;
         }
@@ -242,7 +250,7 @@ export default function Dashboard({ api, apiBase, username }) {
           display:flex;
           justify-content:flex-end;
           margin-top: 4px;
-        } 
+        }
 
         .df-hero-chip{
           display:inline-flex;
@@ -250,12 +258,13 @@ export default function Dashboard({ api, apiBase, username }) {
           gap:10px;
           padding: 10px 14px;
           border-radius: 999px;
-          background: rgba(255,255,255,.75);
+          background: rgba(255,255,255,.78);
           border: 1px solid rgba(17,17,17,.06);
-          box-shadow: 0 8px 18px rgba(17,17,17,.05);
+          box-shadow: 0 10px 24px rgba(17,17,17,.05);
           color: rgba(17,17,17,.68);
           font-size: 13px;
-          font-weight: 600;
+          font-weight: 700;
+          backdrop-filter: blur(10px);
         }
 
         .df-hero-chip-dot{
@@ -264,6 +273,14 @@ export default function Dashboard({ api, apiBase, username }) {
           border-radius:999px;
           background:#C8936B;
           display:inline-block;
+          box-shadow: 0 0 0 0 rgba(200,147,107,.35);
+          animation: dfChipPulse 1.8s infinite ease-in-out;
+        }
+
+        @keyframes dfChipPulse{
+          0%{ box-shadow:0 0 0 0 rgba(200,147,107,.32); }
+          70%{ box-shadow:0 0 0 10px rgba(200,147,107,0); }
+          100%{ box-shadow:0 0 0 0 rgba(200,147,107,0); }
         }
 
         .df-kpi-grid{
@@ -275,27 +292,44 @@ export default function Dashboard({ api, apiBase, username }) {
         .df-kpi-card{
           position:relative;
           overflow:hidden;
-          border-radius: 26px;
+          border-radius: 28px;
           border: 1px solid rgba(17,17,17,.05);
-          box-shadow: 0 12px 26px rgba(17,17,17,.06);
+          box-shadow: 0 14px 28px rgba(17,17,17,.06);
           padding: 22px;
           display:flex;
           align-items:center;
           justify-content:space-between;
           gap:16px;
-          background: rgba(255,255,255,.78);
-          backdrop-filter: blur(10px);
+          background:
+            linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.78));
+          backdrop-filter: blur(12px);
+          transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+        }
+
+        .df-kpi-card:hover{
+          transform: translateY(-2px);
+          box-shadow: 0 18px 34px rgba(17,17,17,.09);
+          border-color: rgba(17,17,17,.08);
+        }
+
+        .df-kpi-card::before{
+          content:"";
+          position:absolute;
+          inset:0;
+          background: linear-gradient(180deg, rgba(255,255,255,.20), transparent 35%);
+          pointer-events:none;
         }
 
         .df-kpi-card::after{
           content:"";
           position:absolute;
-          inset:auto -30px -30px auto;
-          width:120px;
-          height:120px;
+          inset:auto -28px -34px auto;
+          width:124px;
+          height:124px;
           border-radius:999px;
-          opacity:.16;
+          opacity:.15;
           pointer-events:none;
+          filter: blur(0.2px);
         }
 
         .df-kpi-card.rose::after{ background:#E9B0A5; }
@@ -333,9 +367,11 @@ export default function Dashboard({ api, apiBase, username }) {
           justify-content:center;
           flex: 0 0 74px;
           color: #6E434B;
-          background: linear-gradient(135deg, rgba(255,255,255,.95), rgba(236,223,219,.9));
+          background: linear-gradient(135deg, rgba(255,255,255,.96), rgba(236,223,219,.88));
           border: 1px solid rgba(17,17,17,.05);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,.9),
+            0 8px 18px rgba(17,17,17,.04);
         }
 
         .df-kpi-card.plum .df-kpi-icon{ color:#6A4C73; }
@@ -355,12 +391,19 @@ export default function Dashboard({ api, apiBase, username }) {
         }
 
         .df-panel{
-          border-radius: 28px;
+          border-radius: 30px;
           padding: 22px;
-          background: rgba(255,255,255,.80);
-          backdrop-filter: blur(12px);
+          background:
+            linear-gradient(180deg, rgba(255,255,255,.90), rgba(255,255,255,.78));
+          backdrop-filter: blur(14px);
           border: 1px solid rgba(17,17,17,.05);
-          box-shadow: 0 12px 26px rgba(17,17,17,.06);
+          box-shadow: 0 14px 28px rgba(17,17,17,.06);
+          transition: transform .18s ease, box-shadow .18s ease;
+        }
+
+        .df-panel:hover{
+          transform: translateY(-1px);
+          box-shadow: 0 18px 32px rgba(17,17,17,.08);
         }
 
         .df-panel-large{
@@ -373,6 +416,15 @@ export default function Dashboard({ api, apiBase, username }) {
           justify-content:space-between;
           gap:14px;
           margin-bottom: 14px;
+        }
+
+        .df-panel-eyebrow{
+          font-size: 11px;
+          letter-spacing: .18em;
+          text-transform: uppercase;
+          color: rgba(17,17,17,.42);
+          font-weight: 800;
+          margin-bottom: 8px;
         }
 
         .df-panel-title{
@@ -400,8 +452,27 @@ export default function Dashboard({ api, apiBase, username }) {
           align-items:center;
           padding: 13px 12px;
           border-radius: 18px;
-          background: rgba(255,255,255,.66);
+          background: rgba(255,255,255,.68);
           border: 1px solid rgba(17,17,17,.05);
+          animation: dfFadeUp .3s ease both;
+          transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+        }
+
+        .df-activity-item:hover{
+          transform: translateY(-1px);
+          box-shadow: 0 10px 18px rgba(17,17,17,.05);
+          border-color: rgba(17,17,17,.08);
+        }
+
+        @keyframes dfFadeUp{
+          from{
+            opacity:0;
+            transform: translateY(6px);
+          }
+          to{
+            opacity:1;
+            transform: translateY(0);
+          }
         }
 
         .df-activity-dot{
@@ -499,10 +570,16 @@ export default function Dashboard({ api, apiBase, username }) {
         }
 
         .df-mini-alert{
-          border-radius: 20px;
+          border-radius: 22px;
           padding: 18px;
           border: 1px solid rgba(17,17,17,.05);
-          background: rgba(255,255,255,.62);
+          background: rgba(255,255,255,.64);
+          transition: transform .16s ease, box-shadow .16s ease;
+        }
+
+        .df-mini-alert:hover{
+          transform: translateY(-1px);
+          box-shadow: 0 10px 18px rgba(17,17,17,.05);
         }
 
         .df-mini-alert-title{
@@ -554,6 +631,42 @@ export default function Dashboard({ api, apiBase, username }) {
         .df-empty{
           opacity: .7;
           padding: 10px 0;
+        }
+
+        .df-dashboard-loading{
+          display:grid;
+          gap:16px;
+        }
+
+        .df-skeleton{
+          position:relative;
+          overflow:hidden;
+          background: rgba(255,255,255,.72);
+          border: 1px solid rgba(17,17,17,.05);
+          border-radius: 24px;
+          min-height: 120px;
+        }
+
+        .df-skeleton.large{
+          min-height: 320px;
+        }
+
+        .df-skeleton::after{
+          content:"";
+          position:absolute;
+          inset:0;
+          transform: translateX(-100%);
+          background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,.55),
+            transparent
+          );
+          animation: dfShimmer 1.3s infinite;
+        }
+
+        @keyframes dfShimmer{
+          100%{ transform: translateX(100%); }
         }
 
         @media (max-width: 1200px){
@@ -627,6 +740,24 @@ function SummaryRow({ label, value }) {
     <div className="df-summary-row">
       <div className="df-summary-label">{label}</div>
       <div className="df-summary-value">{value}</div>
+    </div>
+  );
+}
+
+function DashboardLoading() {
+  return (
+    <div className="df-dashboard-loading">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 16 }}>
+        <div className="df-skeleton" />
+        <div className="df-skeleton" />
+        <div className="df-skeleton" />
+        <div className="df-skeleton" />
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1.15fr .85fr", gap: 16 }}>
+        <div className="df-skeleton large" />
+        <div className="df-skeleton large" />
+      </div>
     </div>
   );
 }
