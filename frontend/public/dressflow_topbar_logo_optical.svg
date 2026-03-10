@@ -1,0 +1,11 @@
+
+<svg width="1100" height="260" viewBox="0 0 1100 260" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="white"/>
+  <image href='dressflow-logo.png' x='20' y='20' height='210' width='210' />
+  <text x="270" y="160" font-family="Inter, Helvetica, Arial, sans-serif" font-size="62" fill="#241826" letter-spacing="10">
+    <tspan font-weight="700">DRESS</tspan><tspan font-weight="300">FLOW</tspan>
+  </text>
+  <text x="435.0859375" y="220" font-family="Inter, Helvetica, Arial, sans-serif" font-size="22" fill="#D58B7F" text-anchor="middle" letter-spacing="6">
+    AI • FASHION • ERP
+  </text>
+</svg>
