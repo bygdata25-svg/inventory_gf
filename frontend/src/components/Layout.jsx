@@ -6,8 +6,8 @@ function getInitial(userLabel) {
 }
 
 export default function Layout({
-  brandTitle,
-  brandSubtitle,
+  brandTitle = "DressFlow",
+  brandSubtitle = "AI • FASHION • ERP",
   navItems,
   currentPage,
   onNavigate,
@@ -15,6 +15,7 @@ export default function Layout({
   onLogout,
   children
 }) {
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
 
@@ -30,6 +31,74 @@ export default function Layout({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  /* -------------------------------------------------- */
+  /* PAGE TITLE / SUBTITLE */
+  /* -------------------------------------------------- */
+
+  function getPageTitle(pageKey) {
+
+    if (pageKey === "dashboard") {
+      return `Hola, ${userLabel} ✦`;
+    }
+
+    for (const item of navItems) {
+
+      if (item.key === pageKey) return item.label;
+
+      if (Array.isArray(item.children)) {
+        const child = item.children.find((c) => c.key === pageKey);
+        if (child) return child.label;
+      }
+
+    }
+
+    return brandTitle;
+  }
+
+  function getPageSubtitle(pageKey) {
+
+    switch (pageKey) {
+
+      case "dashboard":
+        return "Bienvenido a tu panel de control de DressFlow";
+
+      case "dresses":
+      case "dress_create":
+      case "dress_list":
+        return "Gestioná tu catálogo de vestidos, estados y disponibilidad.";
+
+      case "capsules":
+        return "Organizá cápsulas y colecciones.";
+
+      case "fabrics_group":
+      case "fabrics":
+      case "fabric_rolls":
+      case "fabric_movements":
+        return "Controlá telas, rollos y movimientos de stock.";
+
+      case "loans":
+        return "Administrá préstamos y devoluciones de prendas.";
+
+      case "reports":
+        return "Visualizá reportes y métricas de tu operación.";
+
+      case "settings":
+      case "users":
+      case "suppliers":
+      case "clients":
+        return "Configurá usuarios, clientes y parámetros del sistema.";
+
+      default:
+        return "";
+
+    }
+
+  }
+
+  /* -------------------------------------------------- */
+  /* NAVIGATION */
+  /* -------------------------------------------------- */
 
   const dressesChildren = useMemo(() => {
     const item = navItems.find((x) => x.key === "dresses");
@@ -64,6 +133,7 @@ export default function Layout({
     currentPage === "settings" || settingsChildren.some((c) => c.key === currentPage);
 
   function renderNavItem(it) {
+
     const isGroup =
       (it.key === "dresses" ||
         it.key === "fabrics_group" ||
@@ -73,6 +143,7 @@ export default function Layout({
       it.children.length > 0;
 
     if (!isGroup) {
+
       return (
         <button
           key={it.key}
@@ -81,7 +152,15 @@ export default function Layout({
           type="button"
         >
           <span className="nav-icon">{it.icon}</span>
+
           <span className="nav-label">{it.label}</span>
+
+          {it.badge ? (
+            <span className="nav-badge-wrap">
+              <span className="nav-badge-pulse" />
+              <span className="nav-badge">{it.badge}</span>
+            </span>
+          ) : null}
         </button>
       );
     }
@@ -97,6 +176,7 @@ export default function Layout({
 
     return (
       <div key={it.key} className="nav-group">
+
         <button
           className={`nav-btn ${parentActive ? "active" : ""}`}
           onClick={() => go(it.key)}
@@ -107,8 +187,11 @@ export default function Layout({
         </button>
 
         {parentActive && (
+
           <div className="nav-sub">
+
             {it.children.map((ch) => (
+
               <button
                 key={ch.key}
                 className={`nav-sub-btn ${currentPage === ch.key ? "active" : ""}`}
@@ -118,98 +201,155 @@ export default function Layout({
                 <span className="nav-sub-dot" />
                 <span className="nav-sub-label">{ch.label}</span>
               </button>
+
             ))}
+
           </div>
+
         )}
+
       </div>
     );
   }
 
+  /* -------------------------------------------------- */
+  /* RENDER */
+  /* -------------------------------------------------- */
+
   return (
+
     <div className={`app-shell ${sidebarOpen ? "sidebar-open" : ""}`}>
+
       <div className="overlay" onClick={() => setSidebarOpen(false)} />
 
+      {/* SIDEBAR */}
+
       <aside className="sidebar">
+
         <div className="brand">
+
           <div className="sidebar-logo">
             <img src="/dressflow_favicon.png" alt="DressFlow" />
           </div>
 
           <div className="brand-copy">
             <div className="brand-title">
-              <span className="brand-title-strong">{brandTitle || "DRESS"}</span>
-              <span className="brand-title-light">
-                {brandTitle ? "" : "FLOW"}
-              </span>
-              {brandTitle === "DRESSFLOW" ? "" : null}
+              <span className="brand-title-strong">DRESS</span>
+              <span className="brand-title-light">FLOW</span>
             </div>
 
-            <div className="brand-sub">{brandSubtitle || "AI • FASHION • ERP"}</div>
+            <div className="brand-sub">{brandSubtitle}</div>
           </div>
+
         </div>
 
-        <nav className="nav">{navItems.map((it) => renderNavItem(it))}</nav>
+        <nav className="nav">
+          {navItems.map((it) => renderNavItem(it))}
+        </nav>
+
       </aside>
-        <main className="main">
-  <header className="topbar">
-    <img
-      src="/dressflow_topbar_logo_optical.png"
-      alt="DressFlow"
-      className="topbar-logo"
-    />
-  </header>
 
-  <section className="page-header">
-    <div className="page-header-row">
-      <div className="page-header-left">
-        <h1 className="page-title">Hola, {userLabel} ✦</h1>
-      </div>
+      {/* MAIN */}
 
-      <div className="page-header-right">
-        <div className="page-search">
-          <span className="page-search-icon">⌕</span>
-          <input
-            className="page-search-input"
-            type="text"
-            placeholder="Buscar..."
+      <main className="main">
+
+        {/* TOPBAR */}
+
+        <header className="topbar">
+
+          <button
+            className="btn btn-icon hamburger"
+            onClick={() => setSidebarOpen((v) => !v)}
+          >
+            ☰
+          </button>
+
+          <img
+            src="/dressflow_topbar_logo_optical.png"
+            alt="DressFlow"
+            className="topbar-logo"
           />
-        </div>
 
-        <div className="page-user">
-          <span className="page-user-name">{userLabel}</span>
+        </header>
 
-          <div className="page-avatar" aria-label={userLabel || "Usuario"}>
-            {!avatarError ? (
-              <img
-                src="/user-avatar.png"
-                alt={userLabel || "Usuario"}
-                onError={() => setAvatarError(true)}
-              />
-            ) : (
-              <span>{getInitial(userLabel)}</span>
-            )}
+        {/* PAGE HEADER */}
+
+        <section className="page-header">
+
+          <div className="page-header-row">
+
+            <div className="page-header-left">
+
+              <h1 className="page-title">
+                {getPageTitle(currentPage)}
+              </h1>
+
+              <div className="page-subtitle">
+                {getPageSubtitle(currentPage)}
+              </div>
+
+            </div>
+
+            <div className="page-header-right">
+
+              <div className="page-search">
+
+                <span className="page-search-icon">⌕</span>
+
+                <input
+                  className="page-search-input"
+                  type="text"
+                  placeholder="Buscar..."
+                />
+
+              </div>
+
+              <div className="page-user">
+
+                <span className="page-user-name">{userLabel}</span>
+
+                <div className="page-avatar">
+
+                  {!avatarError ? (
+
+                    <img
+                      src="/user-avatar.png"
+                      alt={userLabel}
+                      onError={() => setAvatarError(true)}
+                    />
+
+                  ) : (
+
+                    <span>{getInitial(userLabel)}</span>
+
+                  )}
+
+                </div>
+
+              </div>
+
+              <button
+                className="btn btn-icon logout-btn"
+                onClick={onLogout}
+              >
+                ⎋
+              </button>
+
+            </div>
+
           </div>
+
+        </section>
+
+        {/* CONTENT */}
+
+        <div className="content">
+          {children}
         </div>
 
-        <button
-          className="btn btn-icon logout-btn"
-          onClick={onLogout}
-          type="button"
-          title="Salir"
-          aria-label="Salir"
-        >
-          ⎋
-        </button>
-      </div>
+      </main>
+
     </div>
 
-    <div className="page-subtitle">
-      Bienvenido a tu panel de control de DressFlow
-    </div>
-  </section>
-
-  <div className="content">{children}</div>
-</main>
-    </div>
   );
 }
