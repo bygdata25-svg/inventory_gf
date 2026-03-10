@@ -148,7 +148,13 @@ export default function Layout({
       </aside>
 
       <main className="main">
-        <header className="header">
+          <header
+	    className="header"
+	    style={{
+	    minHeight: 72,
+	    overflow: "hidden"
+	  }}
+	  >
           <div className="header-left">
             <button
               className="btn btn-icon hamburger"
@@ -159,14 +165,28 @@ export default function Layout({
             >
               ☰
             </button>
-
-            <div className="header-brand-logo">
-              <img
-                src="/dressflow_topbar_logo_optical.svg"
-                alt="DressFlow"
-              />
-            </div>
-          </div>
+	 <div
+	   className="header-brand-logo"
+	   style={{
+	     height: 44,
+	     display: "flex",
+	     alignItems: "center",
+	     overflow: "hidden"
+	   }}
+	 >
+	   <img
+	     src="/dressflow_topbar_logo_optical.png"
+	     alt="DressFlow"
+	     style={{
+	       height: 44,
+	       width: "auto",
+	       maxWidth: 320,
+	       display: "block",
+	       objectFit: "contain"
+	     }}
+	   />
+	 </div>
+         </div>
 
           <div className="header-right">
             <div className="header-search">
