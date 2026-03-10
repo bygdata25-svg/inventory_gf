@@ -51,14 +51,24 @@ export default function Layout({
     return item?.children || [];
   }, [navItems]);
 
-  const isDressesSection = currentPage === "dresses" || dressesChildren.some((c) => c.key === currentPage);
-  const isFabricsSection = currentPage === "fabrics_group" || fabricsChildren.some((c) => c.key === currentPage);
-  const isReportsSection = currentPage === "reports" || reportsChildren.some((c) => c.key === currentPage);
-  const isSettingsSection = currentPage === "settings" || settingsChildren.some((c) => c.key === currentPage);
+  const isDressesSection =
+    currentPage === "dresses" || dressesChildren.some((c) => c.key === currentPage);
+
+  const isFabricsSection =
+    currentPage === "fabrics_group" || fabricsChildren.some((c) => c.key === currentPage);
+
+  const isReportsSection =
+    currentPage === "reports" || reportsChildren.some((c) => c.key === currentPage);
+
+  const isSettingsSection =
+    currentPage === "settings" || settingsChildren.some((c) => c.key === currentPage);
 
   function renderNavItem(it) {
     const isGroup =
-      (it.key === "dresses" || it.key === "fabrics_group" || it.key === "reports" || it.key === "settings") &&
+      (it.key === "dresses" ||
+        it.key === "fabrics_group" ||
+        it.key === "reports" ||
+        it.key === "settings") &&
       Array.isArray(it.children) &&
       it.children.length > 0;
 
@@ -122,11 +132,15 @@ export default function Layout({
       <aside className="sidebar">
         <div className="brand">
           <div className="sidebar-logo">
-            <img src="/dressflow-logo-black.png" alt="DressFlow" />
+            <img src="/dressflow_favicon.png" alt="DressFlow" />
           </div>
+
           <div className="brand-copy">
-            <div className="brand-title">{brandTitle}</div>
-            <div className="brand-sub">{brandSubtitle}</div>
+            <div className="brand-title">
+              <span className="brand-title-strong">DRESS</span>
+              <span className="brand-title-light">FLOW</span>
+            </div>
+            <div className="brand-sub">AI • FASHION • ERP</div>
           </div>
         </div>
 
@@ -146,22 +160,31 @@ export default function Layout({
               ☰
             </button>
 
-            <div className="header-brand-block">
-              <div className="header-brand-title">DRESSFLOW</div>
-              <div className="header-brand-sub">AI • FASHION • ERP</div>
+            <div className="header-brand-logo">
+              <img
+                src="/dressflow_topbar_logo_optical.svg"
+                alt="DressFlow"
+              />
             </div>
           </div>
 
           <div className="header-right">
             <div className="header-search">
               <span className="header-search-icon">⌕</span>
-              <input className="header-search-input" type="text" placeholder="Buscar..." />
+              <input
+                className="header-search-input"
+                type="text"
+                placeholder="Buscar..."
+              />
             </div>
 
             <div className="header-user">
               <div className="header-user-name">{userLabel}</div>
 
-              <div className="header-user-avatar" aria-label={userLabel || "Usuario"}>
+              <div
+                className="header-user-avatar"
+                aria-label={userLabel || "Usuario"}
+              >
                 {!avatarError ? (
                   <img
                     src="/user-avatar.png"
@@ -174,7 +197,12 @@ export default function Layout({
               </div>
             </div>
 
-            <button className="btn btn-icon" onClick={onLogout} type="button" title="Salir">
+            <button
+              className="btn btn-icon"
+              onClick={onLogout}
+              type="button"
+              title="Salir"
+            >
               ⎋
             </button>
           </div>
