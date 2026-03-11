@@ -74,23 +74,27 @@ export default function Dashboard({ api, apiBase, username }) {
     ];
   }, [available, loaned, maintenance, operationalTotal]);
 
-  const recentActivity = useMemo(() => {
-  if (!activity) return [];
+     const recentActivity = useMemo(() => {
+       if (!activity) return [];
 
-  return activity.slice(0, 6).map((item) => ({
-    id: item.when,
-    title: item.title,
-    subtitle: item.subtitle,
-    when: new Date(item.when).toLocaleString("es-AR"),
-    tone:
-      item.type === "loan_created"
-        ? "amber"
-        : item.type === "loan_returned"
-        ? "green"
-        : "plum"
-  }));
-}, [activity]);
-
+       return [...activity]
+         .sort((a, b) => new Date(b.when) - new Date(a.when))
+         .slice(0, 6)
+         .map((item, index) => ({
+           id: `${item.type}-${item.when}-${index}`,
+           title: item.title,
+           subtitle: item.subtitle,
+           when: new Date(item.when).toLocaleString("es-AR"),
+           tone:
+             item.type === "loan_created"
+               ? "amber"
+               : item.type === "loan_returned"
+               ? "green"
+               : item.type === "sale"
+               ? "plum"
+               : "red"
+         }));
+     }, [activity]);
 
   const latestDresses = useMemo(() => dresses.slice(0, 4), [dresses]);
 

@@ -63,7 +63,6 @@ export default function Capsules({ api, apiBase, role }) {
 
   return (
     <div>
-      <h2>Cápsulas</h2>
 
       {msg && <div className="alert alert-warn">{msg}</div>}
 
