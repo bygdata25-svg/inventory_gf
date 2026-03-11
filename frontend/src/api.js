@@ -3,12 +3,22 @@ import { clearAuth, getToken } from "./auth";
 export function makeApiClient({ onUnauthorized } = {}) {
   async function request(url, options = {}) {
     const token = getToken();
+    const isFormData = options.body instanceof FormData;
+
     const headers = {
       ...(options.headers || {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {})
     };
 
-    const r = await fetch(url, { ...options, headers });
+    // Nunca forzar Content-Type cuando el body es FormData
+    if (isFormData) {
+      delete headers["Content-Type"];
+    }
+
+    const r = await fetch(url, {
+      ...options,
+      headers
+    });
 
     if (r.status === 401) {
       clearAuth();
@@ -16,9 +26,13 @@ export function makeApiClient({ onUnauthorized } = {}) {
       throw { status: 401, detail: "unauthorized" };
     }
 
-    // Try to parse json if possible
+    if (r.status === 204) {
+      return null;
+    }
+
     let data = null;
     const ct = r.headers.get("content-type") || "";
+
     if (ct.includes("application/json")) {
       data = await r.json();
     } else {
@@ -34,4 +48,3 @@ export function makeApiClient({ onUnauthorized } = {}) {
 
   return { request };
 }
-
