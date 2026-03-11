@@ -2,18 +2,31 @@ import { useEffect, useMemo, useState } from "react";
 import Badge from "../components/Badge";
 import { formatCurrency } from "../utils/currency";
 
-export default function Dashboard({ api, apiBase }) {
+function resolvePhoto(photoUrl, apiBase) {
+  if (!photoUrl) return null;
+  if (photoUrl.startsWith("http://") || photoUrl.startsWith("https://")) return photoUrl;
+  return `${apiBase.replace(/\/+$/, "")}/${photoUrl.replace(/^\/+/, "")}`;
+}
+
+export default function Dashboard({ api, apiBase, username }) {
   const [summary, setSummary] = useState(null);
-  const [alerts, setAlerts] = useState(null);
+  const [activity, setActivity] = useState([]);
+  const [dresses, setDresses] = useState([]);
   const [error, setError] = useState("");
 
   async function load() {
     try {
       setError("");
-      const s = await api.request(`${apiBase}/api/dashboard/summary`);
-      const a = await api.request(`${apiBase}/api/dashboard/alerts`);
+      
+      const [s, act, d] = await Promise.all([
+      api.request(`${apiBase}/api/dashboard/summary`),
+      api.request(`${apiBase}/api/dashboard/activity`),
+      api.request(`${apiBase}/api/dresses?page=1&page_size=8`)
+    ]);
+      
       setSummary(s);
-      setAlerts(a);
+      setActivity(act);
+      setDresses(Array.isArray(d?.items) ? d.items : []);
     } catch (e) {
       setError(e?.detail || "Error cargando dashboard");
     }
@@ -23,6 +36,7 @@ export default function Dashboard({ api, apiBase }) {
     load();
     const id = setInterval(() => load().catch(() => {}), 60000);
     return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const available = Number(summary?.available || 0);
@@ -61,33 +75,67 @@ export default function Dashboard({ api, apiBase }) {
   }, [available, loaned, maintenance, operationalTotal]);
 
   const recentActivity = useMemo(() => {
-    if (!alerts) return [];
+  if (!activity) return [];
 
-    const overdue = (alerts.overdue_top || []).map((x) => ({
-      id: `overdue-${x.id}`,
-      title: "Préstamo vencido",
-      subtitle: `${x.customer_name} · Vestido #${x.dress_id}`,
-      when: new Date(x.due_at).toLocaleString("es-AR"),
-      tone: "red"
-    }));
+  return activity.slice(0, 6).map((item) => ({
+    id: item.when,
+    title: item.title,
+    subtitle: item.subtitle,
+    when: new Date(item.when).toLocaleString("es-AR"),
+    tone:
+      item.type === "loan_created"
+        ? "amber"
+        : item.type === "loan_returned"
+        ? "green"
+        : "plum"
+  }));
+}, [activity]);
 
-    const dueSoon = (alerts.due_soon_top || []).map((x) => ({
-      id: `soon-${x.id}`,
-      title: "Vence pronto",
-      subtitle: `${x.customer_name} · Vestido #${x.dress_id}`,
-      when: new Date(x.due_at).toLocaleString("es-AR"),
-      tone: "amber"
-    }));
 
-    return [...overdue, ...dueSoon].slice(0, 6);
-  }, [alerts]);
+  const latestDresses = useMemo(() => dresses.slice(0, 4), [dresses]);
+
+  const dashboardAlerts = useMemo(() => {
+  const overdueCount = recentActivity.filter((item) => item.title === "Préstamo vencido").length;
+  const dueSoonCount = recentActivity.filter((item) => item.title === "Vence pronto").length;
+
+  return [
+    {
+      label: "Préstamos vencidos",
+      value: overdueCount,
+      variant: overdueCount > 0 ? "red" : "default",
+      subtitle: overdueCount > 0 ? "Requiere acción" : "Sin vencidos"
+    },
+    {
+      label: "Actividad reciente",
+      value: recentActivity.length,
+      variant: recentActivity.length > 0 ? "yellow" : "default",
+      subtitle: recentActivity.length > 0 ? "Últimos eventos cargados" : "Sin eventos"
+    },
+    {
+      label: "En taller",
+      value: maintenance,
+      variant: maintenance > 0 ? "yellow" : "default",
+      subtitle: maintenance > 0 ? "Pendientes de revisión" : "Sin prendas en taller"
+    }
+  ];
+}, [recentActivity, maintenance]);
+
 
   if (error) return <div className="alert alert-error">{String(error)}</div>;
-  if (!summary || !alerts) return <DashboardLoading />;
+  if (!summary) return <DashboardLoading />;
 
   return (
-    <div className="df-dashboard-premium">
+    <div className="df-dashboard-premium-v2">
       <section className="df-hero">
+        <div className="df-hero-copy">
+          <div className="df-hero-title">
+            Bienvenida, {username || "Usuario"}
+          </div>
+          <div className="df-hero-subtitle">
+            Vista general de operación, inventario y actividad reciente.
+          </div>
+        </div>
+
         <div className="df-hero-chip">
           <span className="df-hero-chip-dot" />
           Actualización automática
@@ -200,25 +248,21 @@ export default function Dashboard({ api, apiBase }) {
           <div className="df-panel-header">
             <div>
               <div className="df-panel-eyebrow">Alerts</div>
-              <div className="df-panel-title">Alertas</div>
-              <div className="df-panel-sub">Seguimiento de devoluciones</div>
+              <div className="df-panel-title">Alertas operativas</div>
+              <div className="df-panel-sub">Seguimiento del estado del negocio</div>
             </div>
           </div>
 
           <div className="df-alert-grid">
-            <MiniAlertCard
-              title="Vencidos"
-              count={alerts.overdue_count}
-              variant={alerts.overdue_count > 0 ? "red" : "default"}
-              subtitle={alerts.overdue_count > 0 ? "Requiere acción" : "Sin vencidos"}
-            />
-
-            <MiniAlertCard
-              title="Vencen pronto"
-              count={alerts.due_soon_count}
-              variant={alerts.due_soon_count > 0 ? "yellow" : "default"}
-              subtitle={alerts.due_soon_count > 0 ? "Próximas 48h" : "Sin alertas"}
-            />
+            {dashboardAlerts.map((item) => (
+              <MiniAlertCard
+                key={item.label}
+                title={item.label}
+                count={item.value}
+                variant={item.variant}
+                subtitle={item.subtitle}
+              />
+            ))}
           </div>
         </div>
 
@@ -240,16 +284,73 @@ export default function Dashboard({ api, apiBase }) {
         </div>
       </section>
 
+      <section className="df-panel">
+        <div className="df-panel-header">
+          <div>
+            <div className="df-panel-eyebrow">Catalog</div>
+            <div className="df-panel-title">Últimos vestidos</div>
+            <div className="df-panel-sub">Prendas recientes cargadas en el sistema</div>
+          </div>
+        </div>
+
+        <div className="df-latest-grid">
+          {latestDresses.length > 0 ? (
+            latestDresses.map((dress) => {
+              const photo = resolvePhoto(dress.photo_url, apiBase);
+
+              return (
+                <div key={dress.id} className="df-latest-card">
+                  <div className="df-latest-photo">
+                    {photo ? (
+                      <img src={photo} alt={dress.name} />
+                    ) : (
+                      <div className="df-latest-empty">Sin foto</div>
+                    )}
+                  </div>
+
+                  <div className="df-latest-body">
+                    <div className="df-latest-name">{dress.name}</div>
+                    <div className="df-latest-code">{dress.code}</div>
+                    <div className="df-latest-meta">
+                      <span>{dress.color || "—"}</span>
+                      <span>{dress.size || "—"}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="df-empty">Todavía no hay vestidos recientes.</div>
+          )}
+        </div>
+      </section>
+
       <style>{`
-        .df-dashboard-premium{
+        .df-dashboard-premium-v2{
           display:grid;
           gap:18px;
         }
 
         .df-hero{
           display:flex;
-          justify-content:flex-end;
-          margin-top: 4px;
+          align-items:flex-start;
+          justify-content:space-between;
+          gap:16px;
+          flex-wrap:wrap;
+          padding: 4px 2px 0;
+        }
+
+        .df-hero-title{
+          font-size: 28px;
+          font-weight: 800;
+          color: #211927;
+          letter-spacing: -0.02em;
+        }
+
+        .df-hero-subtitle{
+          margin-top: 6px;
+          font-size: 15px;
+          color: rgba(17,17,17,.62);
         }
 
         .df-hero-chip{
@@ -329,7 +430,6 @@ export default function Dashboard({ api, apiBase }) {
           border-radius:999px;
           opacity:.15;
           pointer-events:none;
-          filter: blur(0.2px);
         }
 
         .df-kpi-card.rose::after{ background:#E9B0A5; }
@@ -565,7 +665,7 @@ export default function Dashboard({ api, apiBase }) {
 
         .df-alert-grid{
           display:grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: repeat(3, minmax(0,1fr));
           gap:12px;
         }
 
@@ -628,6 +728,71 @@ export default function Dashboard({ api, apiBase }) {
           color:#22192B;
         }
 
+        .df-latest-grid{
+          display:grid;
+          grid-template-columns: repeat(4, minmax(0,1fr));
+          gap:16px;
+        }
+
+        .df-latest-card{
+          border-radius: 22px;
+          overflow:hidden;
+          border: 1px solid rgba(17,17,17,.05);
+          background: rgba(255,255,255,.72);
+          transition: transform .18s ease, box-shadow .18s ease;
+        }
+
+        .df-latest-card:hover{
+          transform: translateY(-2px);
+          box-shadow: 0 14px 24px rgba(17,17,17,.07);
+        }
+
+        .df-latest-photo{
+          width:100%;
+          aspect-ratio: 4 / 5;
+          background: rgba(17,17,17,.04);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          overflow:hidden;
+        }
+
+        .df-latest-photo img{
+          width:100%;
+          height:100%;
+          object-fit:cover;
+          display:block;
+        }
+
+        .df-latest-empty{
+          color: rgba(17,17,17,.48);
+          font-size: 13px;
+        }
+
+        .df-latest-body{
+          padding: 14px;
+        }
+
+        .df-latest-name{
+          font-weight: 800;
+          color:#231A2B;
+        }
+
+        .df-latest-code{
+          margin-top: 4px;
+          font-size: 13px;
+          color: rgba(17,17,17,.52);
+        }
+
+        .df-latest-meta{
+          margin-top: 8px;
+          display:flex;
+          gap:8px;
+          flex-wrap:wrap;
+          color: rgba(17,17,17,.58);
+          font-size: 12px;
+        }
+
         .df-empty{
           opacity: .7;
           padding: 10px 0;
@@ -678,6 +843,14 @@ export default function Dashboard({ api, apiBase }) {
           .df-bottom-grid{
             grid-template-columns: 1fr;
           }
+
+          .df-latest-grid{
+            grid-template-columns: repeat(2, minmax(0,1fr));
+          }
+
+          .df-alert-grid{
+            grid-template-columns: 1fr;
+          }
         }
 
         @media (max-width: 720px){
@@ -689,16 +862,20 @@ export default function Dashboard({ api, apiBase }) {
             grid-template-columns: 1fr;
           }
 
-          .df-alert-grid{
-            grid-template-columns: 1fr;
-          }
-
           .df-activity-item{
             grid-template-columns: 12px 1fr;
           }
 
           .df-activity-time{
             grid-column: 2;
+          }
+
+          .df-latest-grid{
+            grid-template-columns: 1fr;
+          }
+
+          .df-hero{
+            align-items:flex-start;
           }
         }
       `}</style>

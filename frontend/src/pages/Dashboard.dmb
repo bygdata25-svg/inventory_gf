@@ -95,32 +95,34 @@ export default function Dashboard({ api, apiBase, username }) {
   const latestDresses = useMemo(() => dresses.slice(0, 4), [dresses]);
 
   const dashboardAlerts = useMemo(() => {
-    if (!alerts) return [];
+  const overdueCount = recentActivity.filter((item) => item.title === "Préstamo vencido").length;
+  const dueSoonCount = recentActivity.filter((item) => item.title === "Vence pronto").length;
 
-    return [
-      {
-        label: "Préstamos vencidos",
-        value: Number(alerts.overdue_count || 0),
-        variant: Number(alerts.overdue_count || 0) > 0 ? "red" : "default",
-        subtitle: Number(alerts.overdue_count || 0) > 0 ? "Requiere acción" : "Sin vencidos"
-      },
-      {
-        label: "Vencen pronto",
-        value: Number(alerts.due_soon_count || 0),
-        variant: Number(alerts.due_soon_count || 0) > 0 ? "yellow" : "default",
-        subtitle: Number(alerts.due_soon_count || 0) > 0 ? "Próximas 48h" : "Sin alertas"
-      },
-      {
-        label: "En taller",
-        value: maintenance,
-        variant: maintenance > 0 ? "yellow" : "default",
-        subtitle: maintenance > 0 ? "Pendientes de revisión" : "Sin prendas en taller"
-      }
-    ];
-  }, [alerts, maintenance]);
+  return [
+    {
+      label: "Préstamos vencidos",
+      value: overdueCount,
+      variant: overdueCount > 0 ? "red" : "default",
+      subtitle: overdueCount > 0 ? "Requiere acción" : "Sin vencidos"
+    },
+    {
+      label: "Actividad reciente",
+      value: recentActivity.length,
+      variant: recentActivity.length > 0 ? "yellow" : "default",
+      subtitle: recentActivity.length > 0 ? "Últimos eventos cargados" : "Sin eventos"
+    },
+    {
+      label: "En taller",
+      value: maintenance,
+      variant: maintenance > 0 ? "yellow" : "default",
+      subtitle: maintenance > 0 ? "Pendientes de revisión" : "Sin prendas en taller"
+    }
+  ];
+}, [recentActivity, maintenance]);
+
 
   if (error) return <div className="alert alert-error">{String(error)}</div>;
-  if (!summary || !alerts) return <DashboardLoading />;
+  if (!summary) return <DashboardLoading />;
 
   return (
     <div className="df-dashboard-premium-v2">
