@@ -5,10 +5,9 @@ export default function ReportsMovements({ api, apiBase }) {
   const [rows, setRows] = useState([]);
   const [error, setError] = useState("");
 
-  // filters
   const [q, setQ] = useState("");
   const [rollId, setRollId] = useState("");
-  const [movementType, setMovementType] = useState(""); // "" | IN | OUT | ADJUST
+  const [movementType, setMovementType] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
@@ -38,7 +37,6 @@ export default function ReportsMovements({ api, apiBase }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // rolls list from rows (simple) – si preferís, lo traemos desde /api/rolls
   const rollOptions = useMemo(() => {
     const map = new Map();
     for (const r of rows) {
@@ -56,12 +54,17 @@ export default function ReportsMovements({ api, apiBase }) {
   return (
     <>
       <div className="card">
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline", flexWrap: "wrap" }}>
-          <div>
-            <h2 style={{ margin: 0 }}>{t("reports.movements.title")}</h2>
-            <div style={{ color: "var(--muted)", fontSize: 13, marginTop: 4 }}>
-              {t("reports.movements.subtitle")}
-            </div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 12,
+            alignItems: "center",
+            flexWrap: "wrap"
+          }}
+        >
+          <div style={{ fontWeight: 700, fontSize: 18 }}>
+            Reporte de Movimientos
           </div>
 
           <button className="btn" type="button" onClick={() => load().catch(showApiError)}>
@@ -181,4 +184,3 @@ export default function ReportsMovements({ api, apiBase }) {
     </>
   );
 }
-

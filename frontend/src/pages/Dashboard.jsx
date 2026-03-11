@@ -182,7 +182,6 @@ export default function Dashboard({ api, apiBase, username }) {
         <div className="df-panel df-panel-large">
           <div className="df-panel-header">
             <div>
-              <div className="df-panel-eyebrow">Timeline</div>
               <div className="df-panel-title">Actividad reciente</div>
               <div className="df-panel-sub">Eventos relevantes del sistema</div>
             </div>
@@ -213,7 +212,6 @@ export default function Dashboard({ api, apiBase, username }) {
         <div className="df-panel">
           <div className="df-panel-header">
             <div>
-              <div className="df-panel-eyebrow">Inventory</div>
               <div className="df-panel-title">Estado del inventario</div>
               <div className="df-panel-sub">Vestidos operativos actuales</div>
             </div>
@@ -249,7 +247,6 @@ export default function Dashboard({ api, apiBase, username }) {
         <div className="df-panel">
           <div className="df-panel-header">
             <div>
-              <div className="df-panel-eyebrow">Alerts</div>
               <div className="df-panel-title">Alertas operativas</div>
               <div className="df-panel-sub">Seguimiento del estado del negocio</div>
             </div>
@@ -271,7 +268,6 @@ export default function Dashboard({ api, apiBase, username }) {
         <div className="df-panel">
           <div className="df-panel-header">
             <div>
-              <div className="df-panel-eyebrow">Business</div>
               <div className="df-panel-title">Resumen comercial</div>
               <div className="df-panel-sub">Indicadores del período actual</div>
             </div>
@@ -289,7 +285,6 @@ export default function Dashboard({ api, apiBase, username }) {
       <section className="df-panel">
         <div className="df-panel-header">
           <div>
-            <div className="df-panel-eyebrow">Catalog</div>
             <div className="df-panel-title">Últimos vestidos</div>
             <div className="df-panel-sub">Prendas recientes cargadas en el sistema</div>
           </div>
