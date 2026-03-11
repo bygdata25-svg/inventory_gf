@@ -5,10 +5,10 @@ import { t } from "../i18n";
 import DressDetail from "./DressDetailPage";
 import { DRESS_LOCATIONS } from "../constants/dressLocations";
 
-function resolvePhoto(photoUrl) {
+function resolvePhoto(photoUrl, apiBase) {
   if (!photoUrl) return null;
   if (photoUrl.startsWith("http://") || photoUrl.startsWith("https://")) return photoUrl;
-  return `/${photoUrl.replace(/^\/+/, "")}`;
+  return `${apiBase.replace(/\/+$/, "")}/${photoUrl.replace(/^\/+/, "")}`;
 }
 
 function normalizeText(value) {
@@ -17,7 +17,7 @@ function normalizeText(value) {
 
 export default function Dresses({ api, apiBase, role, mode = "list" }) {
   const canEdit = role === "ADMIN" || role === "OPERATOR";
-  const pageSize = 15;
+  const pageSize = 10;
   const showCreate = mode === "create";
   const showList = mode === "list";
 
@@ -56,13 +56,48 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
     color: "",
     location: "",
     notes: "",
-    photo_url: "",
     price: "",
     capsule_id: ""
   });
 
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState("");
+
   const [loanForm, setLoanForm] = useState(null);
   const [saleForm, setSaleForm] = useState(null);
+
+  useEffect(() => {
+    return () => {
+      if (photoPreview && photoPreview.startsWith("blob:")) {
+        URL.revokeObjectURL(photoPreview);
+      }
+    };
+  }, [photoPreview]);
+
+  function handlePhotoChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Seleccioná una imagen válida");
+      return;
+    }
+
+    if (photoPreview && photoPreview.startsWith("blob:")) {
+      URL.revokeObjectURL(photoPreview);
+    }
+
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  }
+
+  function clearPhotoSelection() {
+    if (photoPreview && photoPreview.startsWith("blob:")) {
+      URL.revokeObjectURL(photoPreview);
+    }
+    setPhotoFile(null);
+    setPhotoPreview("");
+  }
 
   async function loadAllDresses() {
     setLoading(true);
@@ -76,29 +111,29 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
       } else {
         setAllItems(Array.isArray(data?.items) ? data.items : []);
       }
-} catch (e) {
-  console.error("Error loading dresses", e);
+    } catch (e) {
+      console.error("Error loading dresses", e);
 
-  let message = t("ui.error");
+      let message = t("ui.error");
 
-  if (typeof e?.detail === "string") {
-    message = e.detail;
-  } else if (Array.isArray(e?.detail)) {
-    message = e.detail.map((x) => x?.msg || JSON.stringify(x)).join(" | ");
-  } else if (e?.detail && typeof e.detail === "object") {
-    message = e.detail.msg || e.detail.message || JSON.stringify(e.detail);
-  } else if (typeof e?.message === "string") {
-    message = e.message;
-  } else {
-    message = JSON.stringify(e);
+      if (typeof e?.detail === "string") {
+        message = e.detail;
+      } else if (Array.isArray(e?.detail)) {
+        message = e.detail.map((x) => x?.msg || JSON.stringify(x)).join(" | ");
+      } else if (e?.detail && typeof e.detail === "object") {
+        message = e.detail.msg || e.detail.message || JSON.stringify(e.detail);
+      } else if (typeof e?.message === "string") {
+        message = e.message;
+      } else {
+        message = JSON.stringify(e);
+      }
+
+      setError(message);
+      setAllItems([]);
+    } finally {
+      setLoading(false);
+    }
   }
-
-  setError(message);
-  setAllItems([]);
-} finally {
-  setLoading(false);
-}
-}
 
   async function loadCapsules() {
     setLoadingCapsules(true);
@@ -126,20 +161,22 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
     if (!canEdit) return;
 
     try {
+      const formData = new FormData();
+      formData.append("code", form.code.trim());
+      formData.append("name", form.name.trim());
+      formData.append("status", "AVAILABLE");
+
+      if (form.size) formData.append("size", form.size);
+      if (form.color) formData.append("color", form.color);
+      if (form.location) formData.append("location", form.location);
+      if (form.notes) formData.append("notes", form.notes);
+      if (form.price !== "") formData.append("price", String(Number(form.price)));
+      if (form.capsule_id !== "") formData.append("capsule_id", String(Number(form.capsule_id)));
+      if (photoFile) formData.append("photo", photoFile);
+
       await api.request(`${apiBase}/api/dresses`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          code: form.code.trim(),
-          name: form.name.trim(),
-          size: form.size || null,
-          color: form.color || null,
-          location: form.location || null,
-          notes: form.notes || null,
-          photo_url: form.photo_url || null,
-          price: form.price === "" ? null : Number(form.price),
-          capsule_id: form.capsule_id === "" ? null : Number(form.capsule_id)
-        })
+        body: formData
       });
 
       setForm({
@@ -149,10 +186,11 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
         color: "",
         location: "",
         notes: "",
-        photo_url: "",
         price: "",
         capsule_id: ""
       });
+
+      clearPhotoSelection();
 
       await loadAllDresses();
     } catch (e) {
@@ -397,25 +435,58 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
             />
 
             <input
-              placeholder="Foto (URL o ruta relativa)"
-              value={form.photo_url}
-              onChange={(e) => setForm({ ...form, photo_url: e.target.value })}
-              style={{ minWidth: 260 }}
-            />
-
-            <input
               placeholder="Notas"
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               style={{ minWidth: 240 }}
             />
+          </div>
 
-            <button type="submit">{t("actions.create") || "Crear"}</button>
+          <div className="dress-upload-box">
+            <div className="dress-upload-left">
+              <div className="label">Foto del vestido</div>
+
+              <label className="btn" style={{ width: "fit-content" }}>
+                Subir foto
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  style={{ display: "none" }}
+                />
+              </label>
+
+              {photoFile && (
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={clearPhotoSelection}
+                >
+                  Quitar foto
+                </button>
+              )}
+            </div>
+
+            <div className="dress-upload-preview">
+              {photoPreview ? (
+                <img
+                  src={photoPreview}
+                  alt="Preview"
+                  className="dress-upload-image"
+                />
+              ) : (
+                <div className="dress-upload-empty">Sin foto cargada</div>
+              )}
+            </div>
           </div>
 
           {loadingCapsules && (
             <div style={{ marginTop: 8, opacity: 0.7 }}>Cargando cápsulas...</div>
           )}
+
+          <div style={{ marginTop: 12 }}>
+            <button type="submit">{t("actions.create") || "Crear"}</button>
+          </div>
         </form>
       )}
 
@@ -529,7 +600,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
                   <td>
                     {d.photo_url ? (
                       <img
-                        src={resolvePhoto(d.photo_url)}
+                        src={resolvePhoto(d.photo_url, apiBase)}
                         alt={d.name}
                         style={{
                           width: 44,
@@ -774,6 +845,45 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
         .dress-row:hover td{
           background: rgba(17,17,17,.02);
         }
+
+        .dress-upload-box{
+          margin-top: 12px;
+          display:grid;
+          grid-template-columns: 220px 180px;
+          gap: 16px;
+          align-items:start;
+        }
+
+        .dress-upload-left{
+          display:grid;
+          gap:10px;
+          align-content:start;
+        }
+
+        .dress-upload-preview{
+          width: 180px;
+          height: 220px;
+          border-radius: 14px;
+          border: 1px dashed rgba(0,0,0,.18);
+          overflow:hidden;
+          background: rgba(255,255,255,.7);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        }
+
+        .dress-upload-image{
+          width:100%;
+          height:100%;
+          object-fit:cover;
+          display:block;
+        }
+
+        .dress-upload-empty{
+          opacity:.65;
+          font-size: 13px;
+        }
+
         .modal-overlay{
           position: fixed;
           inset: 0;
@@ -784,6 +894,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
           padding: 18px;
           z-index: 999;
         }
+
         .modal{
           width: min(860px, 100%);
           background: #fff;
@@ -792,6 +903,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
           box-shadow: 0 12px 40px rgba(0,0,0,.18);
           padding: 14px;
         }
+
         .modal-head{
           display:flex;
           align-items:center;
@@ -799,18 +911,30 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
           gap: 10px;
           margin-bottom: 12px;
         }
+
         .modal-grid{
           display:grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 10px;
         }
+
         .modal-actions{
           display:flex;
           gap: 10px;
           margin-top: 12px;
         }
+
         @media (max-width: 720px){
           .modal-grid{ grid-template-columns: 1fr; }
+
+          .dress-upload-box{
+            grid-template-columns: 1fr;
+          }
+
+          .dress-upload-preview{
+            width: 100%;
+            max-width: 220px;
+          }
         }
       `}</style>
     </div>

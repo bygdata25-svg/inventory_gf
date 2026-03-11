@@ -25,6 +25,8 @@ from app.api.alerts import router as alerts_router
 from app.api.dress_sales import router as dress_sales_router
 from app.api.dashboard import router as dashboard_router
 from app.api.dashboard_alerts import router as dashboard_alerts_router
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 
 
@@ -41,6 +43,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+Path("uploads/dresses").mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 @app.on_event("startup")
 def create_tables():

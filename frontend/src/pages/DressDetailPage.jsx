@@ -2,11 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { dressStatusLabel } from "../utils/status";
 import { DRESS_LOCATIONS } from "../constants/dressLocations";
 
-
-function resolvePhoto(photoUrl) {
+function resolvePhoto(photoUrl, apiBase) {
   if (!photoUrl) return null;
   if (photoUrl.startsWith("http://") || photoUrl.startsWith("https://")) return photoUrl;
-  return `/${photoUrl.replace(/^\/+/, "")}`;
+  return `${apiBase.replace(/\/+$/, "")}/${photoUrl.replace(/^\/+/, "")}`;
 }
 
 function badgeClass(status) {
@@ -54,7 +53,18 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
     notes: ""
   });
 
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState("");
+
   const isAdmin = role === "ADMIN";
+
+  useEffect(() => {
+    return () => {
+      if (photoPreview && photoPreview.startsWith("blob:")) {
+        URL.revokeObjectURL(photoPreview);
+      }
+    };
+  }, [photoPreview]);
 
   async function loadCapsules() {
     try {
@@ -72,6 +82,12 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
       location: data?.location ?? "",
       notes: data?.notes ?? ""
     });
+
+    if (photoPreview && photoPreview.startsWith("blob:")) {
+      URL.revokeObjectURL(photoPreview);
+    }
+    setPhotoFile(null);
+    setPhotoPreview("");
   }
 
   async function loadDetail() {
@@ -126,7 +142,35 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
 
-  const imgSrc = useMemo(() => resolvePhoto(dress?.photo_url), [dress?.photo_url]);
+  const imgSrc = useMemo(() => {
+    if (photoPreview) return photoPreview;
+    return resolvePhoto(dress?.photo_url, apiBase);
+  }, [dress?.photo_url, apiBase, photoPreview]);
+
+  function handlePhotoChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Seleccioná una imagen válida");
+      return;
+    }
+
+    if (photoPreview && photoPreview.startsWith("blob:")) {
+      URL.revokeObjectURL(photoPreview);
+    }
+
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  }
+
+  function clearPhotoSelection() {
+    if (photoPreview && photoPreview.startsWith("blob:")) {
+      URL.revokeObjectURL(photoPreview);
+    }
+    setPhotoFile(null);
+    setPhotoPreview("");
+  }
 
   async function updateStatus(status) {
     setSavingStatus(true);
@@ -146,48 +190,53 @@ export default function DressDetailPage({ api, apiBase, dressId, onBack, onRefre
     }
   }
 
-async function saveEdit() {
-  setSavingEdit(true);
+  async function saveEdit() {
+    setSavingEdit(true);
 
-  try {
-    await api.request(`${apiBase}/api/dresses/${dressId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        price: editForm.price === "" ? null : Number(editForm.price),
-        capsule_id: editForm.capsule_id === "" ? null : Number(editForm.capsule_id),
-        location: editForm.location || null,
-        notes: editForm.notes || null
-      })
-    });
+    try {
+      const formData = new FormData();
 
-    setEditing(false);
-    await loadDetail();
-    if (onRefresh) onRefresh();
-  } catch (e) {
-    console.error("saveEdit error:", e);
+      formData.append("price", editForm.price === "" ? "" : String(Number(editForm.price)));
+      formData.append("capsule_id", editForm.capsule_id === "" ? "" : String(Number(editForm.capsule_id)));
+      formData.append("location", editForm.location || "");
+      formData.append("notes", editForm.notes || "");
 
-    let message = "No se pudieron guardar los cambios";
+      if (photoFile) {
+        formData.append("photo", photoFile);
+      }
 
-    if (typeof e === "string") {
-      message = e;
-    } else if (typeof e?.detail === "string") {
-      message = e.detail;
-    } else if (Array.isArray(e?.detail)) {
-      message = e.detail.map((x) => x?.msg || JSON.stringify(x)).join(" | ");
-    } else if (e?.detail && typeof e.detail === "object") {
-      message = JSON.stringify(e.detail, null, 2);
-    } else if (typeof e?.message === "string") {
-      message = e.message;
-    } else {
-      message = JSON.stringify(e, null, 2);
+      await api.request(`${apiBase}/api/dresses/${dressId}`, {
+        method: "PATCH",
+        body: formData
+      });
+
+      setEditing(false);
+      await loadDetail();
+      if (onRefresh) onRefresh();
+    } catch (e) {
+      console.error("saveEdit error:", e);
+
+      let message = "No se pudieron guardar los cambios";
+
+      if (typeof e === "string") {
+        message = e;
+      } else if (typeof e?.detail === "string") {
+        message = e.detail;
+      } else if (Array.isArray(e?.detail)) {
+        message = e.detail.map((x) => x?.msg || JSON.stringify(x)).join(" | ");
+      } else if (e?.detail && typeof e.detail === "object") {
+        message = JSON.stringify(e.detail, null, 2);
+      } else if (typeof e?.message === "string") {
+        message = e.message;
+      } else {
+        message = JSON.stringify(e, null, 2);
+      }
+
+      alert(message);
+    } finally {
+      setSavingEdit(false);
     }
-
-    alert(message);
-  } finally {
-    setSavingEdit(false);
   }
-}
 
   async function createLoan(e) {
     e.preventDefault();
@@ -410,6 +459,30 @@ async function saveEdit() {
               </div>
             )}
           </div>
+
+          {editing && isAdmin && (
+            <div className="dress-photo-tools">
+              <label className="btn" style={{ width: "fit-content" }}>
+                {dress.photo_url || photoFile ? "Cambiar foto" : "Agregar foto"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  style={{ display: "none" }}
+                />
+              </label>
+
+              {photoFile && (
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={clearPhotoSelection}
+                >
+                  Quitar selección
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="dress-detail-hero-right">
@@ -640,6 +713,59 @@ async function saveEdit() {
           </div>
         </div>
       )}
+
+      <style>{`
+        .dress-photo-tools{
+          display:flex;
+          gap:10px;
+          flex-wrap:wrap;
+          margin-top:12px;
+        }
+
+        .modal-overlay{
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,.35);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 18px;
+          z-index: 999;
+        }
+
+        .modal{
+          width: min(860px, 100%);
+          background: #fff;
+          border-radius: 14px;
+          border: 1px solid rgba(0,0,0,.12);
+          box-shadow: 0 12px 40px rgba(0,0,0,.18);
+          padding: 14px;
+        }
+
+        .modal-head{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap: 10px;
+          margin-bottom: 12px;
+        }
+
+        .modal-grid{
+          display:grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .modal-actions{
+          display:flex;
+          gap: 10px;
+          margin-top: 12px;
+        }
+
+        @media (max-width: 720px){
+          .modal-grid{ grid-template-columns: 1fr; }
+        }
+      `}</style>
     </div>
   );
 }
