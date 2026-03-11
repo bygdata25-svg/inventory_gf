@@ -42,7 +42,6 @@ def save_uploaded_photo(photo: UploadFile | None) -> str | None:
 def create_dress(
     code: str = Form(...),
     name: str = Form(...),
-    description: str | None = Form(default=None),
     color: str | None = Form(default=None),
     size: str | None = Form(default=None),
     price: float | None = Form(default=None),
