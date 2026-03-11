@@ -99,38 +99,40 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
     setPhotoPreview("");
   }
 
-  async function loadAllDresses() {
-    setLoading(true);
-    setError("");
+async function loadAllDresses() {
+  setLoading(true);
+  setError("");
 
-    try {
-      const data = await api.request(`${apiBase}/api/dresses?page=1&page_size=100`);
+  try {
+    const data = await api.request(`${apiBase}/api/dresses?page=1&page_size=100`);
 
-      if (Array.isArray(data)) {
-        setAllItems(data);
-      } else {
-        setAllItems(Array.isArray(data?.items) ? data.items : []);
-      }
-      } catch (e) {
-  console.error("createDress error:", e);
+    if (Array.isArray(data)) {
+      setAllItems(data);
+    } else {
+      setAllItems(Array.isArray(data?.items) ? data.items : []);
+    }
+  } catch (e) {
+    console.error("Error loading dresses", e);
 
-  let message = "Error creando vestido";
+    let message = t("ui.error");
 
-  if (typeof e === "string") {
-    message = e;
-  } else if (typeof e?.detail === "string") {
-    message = e.detail;
-  } else if (Array.isArray(e?.detail)) {
-    message = e.detail.map((x) => x?.msg || JSON.stringify(x)).join(" | ");
-  } else if (e?.detail && typeof e.detail === "object") {
-    message = JSON.stringify(e.detail, null, 2);
-  } else if (typeof e?.message === "string") {
-    message = e.message;
-  } else {
-    message = JSON.stringify(e, null, 2);
+    if (typeof e?.detail === "string") {
+      message = e.detail;
+    } else if (Array.isArray(e?.detail)) {
+      message = e.detail.map((x) => x?.msg || JSON.stringify(x)).join(" | ");
+    } else if (e?.detail && typeof e.detail === "object") {
+      message = e.detail.msg || e.detail.message || JSON.stringify(e.detail);
+    } else if (typeof e?.message === "string") {
+      message = e.message;
+    } else {
+      message = JSON.stringify(e);
+    }
+
+    setError(message);
+    setAllItems([]);
+  } finally {
+    setLoading(false);
   }
-
-  alert(message);
 }
 
   async function loadCapsules() {
@@ -191,9 +193,27 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
       clearPhotoSelection();
 
       await loadAllDresses();
-    } catch (e) {
-      alert(e?.detail || "Error creando vestido");
-    }
+} catch (e) {
+  console.error("createDress error:", e);
+
+  let message = "Error creando vestido";
+
+  if (typeof e === "string") {
+    message = e;
+  } else if (typeof e?.detail === "string") {
+    message = e.detail;
+  } else if (Array.isArray(e?.detail)) {
+    message = e.detail.map((x) => x?.msg || JSON.stringify(x)).join(" | ");
+  } else if (e?.detail && typeof e.detail === "object") {
+    message = JSON.stringify(e.detail, null, 2);
+  } else if (typeof e?.message === "string") {
+    message = e.message;
+  } else {
+    message = JSON.stringify(e, null, 2);
+  }
+
+  alert(message);
+}
   }
 
   async function createLoan(e) {
