@@ -111,23 +111,27 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
       } else {
         setAllItems(Array.isArray(data?.items) ? data.items : []);
       }
-    } catch (e) {
-      console.error("Error loading dresses", e);
+      } catch (e) {
+  console.error("createDress error:", e);
 
-      let message = t("ui.error");
+  let message = "Error creando vestido";
 
-      if (typeof e?.detail === "string") {
-        message = e.detail;
-      } else if (Array.isArray(e?.detail)) {
-        message = e.detail.map((x) => x?.msg || JSON.stringify(x)).join(" | ");
-      } else if (e?.detail && typeof e.detail === "object") {
-        message = e.detail.msg || e.detail.message || JSON.stringify(e.detail);
-      } else if (typeof e?.message === "string") {
-        message = e.message;
-      } else {
-        message = JSON.stringify(e);
-      }
+  if (typeof e === "string") {
+    message = e;
+  } else if (typeof e?.detail === "string") {
+    message = e.detail;
+  } else if (Array.isArray(e?.detail)) {
+    message = e.detail.map((x) => x?.msg || JSON.stringify(x)).join(" | ");
+  } else if (e?.detail && typeof e.detail === "object") {
+    message = JSON.stringify(e.detail, null, 2);
+  } else if (typeof e?.message === "string") {
+    message = e.message;
+  } else {
+    message = JSON.stringify(e, null, 2);
+  }
 
+  alert(message);
+}
       setError(message);
       setAllItems([]);
     } finally {
