@@ -159,7 +159,8 @@
     "searchHint": "Código, nombre, color...", 
     "dateFrom": "Fecha Desde",
     "dateTo":  "Fecha Hasta",
-    "totalMeters": "Metros totales"
+    "totalMeters": "Metros totales",
+    "empty": "No hay resultados"
   },
   "values": {
     "title": "Reporte de valuación",
