@@ -35,6 +35,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "https://inventory-gf-fe.onrender.com",
+        "https://dressflow.onrender.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
