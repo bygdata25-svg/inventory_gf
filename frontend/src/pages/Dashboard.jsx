@@ -133,10 +133,8 @@ export default function Dashboard({ api, apiBase, username }) {
       <section className="df-hero">
         <div className="df-hero-copy">
           <div className="df-hero-title">
-            Bienvenida, {username || "Usuario"}
           </div>
           <div className="df-hero-subtitle">
-            Vista general de operación, inventario y actividad reciente.
           </div>
         </div>
 

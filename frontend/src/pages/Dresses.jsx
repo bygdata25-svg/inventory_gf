@@ -367,7 +367,6 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
 
   return (
     <div>
-      <h2>{showCreate ? "Crear vestido" : "Listado y filtros"}</h2>
 
       {error && <div className="alert alert-error">{String(error)}</div>}
 
