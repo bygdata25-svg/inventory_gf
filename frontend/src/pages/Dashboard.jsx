@@ -74,33 +74,23 @@ export default function Dashboard({ api, apiBase, username }) {
     ];
   }, [available, loaned, maintenance, operationalTotal]);
 
-    const recentActivity = useMemo(() => {
-       if (!activity) return [];
+  const recentActivity = useMemo(() => {
+  if (!activity) return [];
 
-       return activity.map((item) => ({
-         id: item.when,
-         title: item.title,
-         subtitle: item.subtitle,
-         when: new Date(item.when).toLocaleString("es-AR"),
-         tone:
-           item.type === "loan_created"
-             ? "amber"
-             : item.type === "loan_returned"
-             ? "green"
-             : "plum"
-       }));
-     }, [activity]);
+  return activity.slice(0, 6).map((item) => ({
+    id: item.when,
+    title: item.title,
+    subtitle: item.subtitle,
+    when: new Date(item.when).toLocaleString("es-AR"),
+    tone:
+      item.type === "loan_created"
+        ? "amber"
+        : item.type === "loan_returned"
+        ? "green"
+        : "plum"
+  }));
+}, [activity]);
 
-    const dueSoon = (alerts.due_soon_top || []).map((x) => ({
-      id: `soon-${x.id}`,
-      title: "Vence pronto",
-      subtitle: `${x.customer_name} · Vestido #${x.dress_id}`,
-      when: new Date(x.due_at).toLocaleString("es-AR"),
-      tone: "amber"
-    }));
-
-    return [...overdue, ...dueSoon].slice(0, 6);
-  }, [alerts]);
 
   const latestDresses = useMemo(() => dresses.slice(0, 4), [dresses]);
 
