@@ -132,12 +132,6 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
 
   alert(message);
 }
-      setError(message);
-      setAllItems([]);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function loadCapsules() {
     setLoadingCapsules(true);
