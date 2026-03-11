@@ -10,23 +10,23 @@ function resolvePhoto(photoUrl, apiBase) {
 
 export default function Dashboard({ api, apiBase, username }) {
   const [summary, setSummary] = useState(null);
-  const [alerts, setAlerts] = useState(null);
+  const [activity, setActivity] = useState([]);
   const [dresses, setDresses] = useState([]);
   const [error, setError] = useState("");
 
   async function load() {
     try {
       setError("");
-
-      const [s, a, d] = await Promise.all([
-        api.request(`${apiBase}/api/dashboard/summary`),
-        api.request(`${apiBase}/api/dashboard/alerts`),
-        api.request(`${apiBase}/api/dresses?page=1&page_size=8`)
-      ]);
-
+      
+      const [s, act, d] = await Promise.all([
+      api.request(`${apiBase}/api/dashboard/summary`),
+      api.request(`${apiBase}/api/dashboard/activity`),
+      api.request(`${apiBase}/api/dresses?page=1&page_size=8`)
+    ]);
+      
       setSummary(s);
-      setAlerts(a);
-      setDresses(Array.isArray(d?.items) ? d.items : Array.isArray(d) ? d : []);
+      setActivity(act);
+      setDresses(Array.isArray(d?.items) ? d.items : []);
     } catch (e) {
       setError(e?.detail || "Error cargando dashboard");
     }
@@ -74,16 +74,22 @@ export default function Dashboard({ api, apiBase, username }) {
     ];
   }, [available, loaned, maintenance, operationalTotal]);
 
-  const recentActivity = useMemo(() => {
-    if (!alerts) return [];
+    const recentActivity = useMemo(() => {
+       if (!activity) return [];
 
-    const overdue = (alerts.overdue_top || []).map((x) => ({
-      id: `overdue-${x.id}`,
-      title: "Préstamo vencido",
-      subtitle: `${x.customer_name} · Vestido #${x.dress_id}`,
-      when: new Date(x.due_at).toLocaleString("es-AR"),
-      tone: "red"
-    }));
+       return activity.map((item) => ({
+         id: item.when,
+         title: item.title,
+         subtitle: item.subtitle,
+         when: new Date(item.when).toLocaleString("es-AR"),
+         tone:
+           item.type === "loan_created"
+             ? "amber"
+             : item.type === "loan_returned"
+             ? "green"
+             : "plum"
+       }));
+     }, [activity]);
 
     const dueSoon = (alerts.due_soon_top || []).map((x) => ({
       id: `soon-${x.id}`,
