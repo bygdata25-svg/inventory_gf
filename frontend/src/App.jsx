@@ -16,7 +16,6 @@ import {
   IconReport,
   IconSupplier
 } from "./components/Icons";
-import Reports from "./pages/Reports";
 import Suppliers from "./pages/Suppliers";
 
 // ✅ NUEVO: páginas para Vestidos / Préstamos
@@ -25,6 +24,9 @@ import DressLoans from "./pages/DressLoans";
 import Badge from "./components/Badge";
 import Dashboard from "./pages/Dashboard";
 import Capsules from "./pages/Capsules";
+import ReportsStock from "./pages/ReportsStock";
+import ReportsValuation from "./pages/ReportsValuation";
+import ReportsMovements from "./pages/ReportsMovements";
 
 // const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://inventory-gf.onrender.com";
@@ -227,11 +229,23 @@ const pageTitleMap = {
 
 {page === "dress_loans" && <DressLoans api={api} apiBase={API_BASE} role={role} />}
 
-{page === "reports" && <Reports api={api} apiBase={API_BASE} role={role} />}
-{page === "reports_stock" && <Reports api={api} apiBase={API_BASE} role={role} initial="stock" />}
-{page === "reports_valuation" && <Reports api={api} apiBase={API_BASE} role={role} initial="valuation" />}
-{page === "reports_movements" && <Reports api={api} apiBase={API_BASE} role={role} initial="movements" />}
+{page === "reports" && (
+  <div className="card">
+    Seleccioná un reporte desde el menú lateral.
+  </div>
+)}
 
+{page === "reports_stock" && (
+  <ReportsStock api={api} apiBase={API_BASE} role={role} />
+)}
+
+{page === "reports_valuation" && (
+  <ReportsValuation api={api} apiBase={API_BASE} role={role} />
+)}
+
+{page === "reports_movements" && (
+  <ReportsMovements api={api} apiBase={API_BASE} role={role} />
+)}
 {page === "users" && role === "ADMIN" && <Users api={api} apiBase={API_BASE} role={role} />}
 {page === "suppliers" && <Suppliers api={api} apiBase={API_BASE} role={role} />}
 
