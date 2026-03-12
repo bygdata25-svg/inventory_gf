@@ -17,8 +17,6 @@ import {
   IconSupplier
 } from "./components/Icons";
 import Suppliers from "./pages/Suppliers";
-
-// ✅ NUEVO: páginas para Vestidos / Préstamos
 import Dresses from "./pages/Dresses";
 import DressLoans from "./pages/DressLoans";
 import Badge from "./components/Badge";
@@ -27,9 +25,12 @@ import Capsules from "./pages/Capsules";
 import ReportsStock from "./pages/ReportsStock";
 import ReportsValuation from "./pages/ReportsValuation";
 import ReportsMovements from "./pages/ReportsMovements";
+import ReportsDressesStatus from "./pages/ReportsDressesStatus";
+import ReportsDressLoans from "./pages/ReportsDressLoans";
+import ReportsDressesPopularity from "./pages/ReportsDressesPopularity";
+import ReportsDressSales from "./pages/ReportsDressSales";
 import { ToastProvider } from "./context/ToastContext";
 
-// const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://inventory-gf.onrender.com";
 
 export default function App() {
@@ -37,8 +38,6 @@ export default function App() {
   const [page, setPage] = useState("dashboard");
   const [me, setMe] = useState(null);
   const [sessionMsg, setSessionMsg] = useState("");
-
-  // ✅ NUEVO: contador de vencidos
   const [overdueCount, setOverdueCount] = useState(0);
 
   const api = useMemo(
@@ -58,24 +57,18 @@ export default function App() {
     setMe(data);
   }
 
-  // ✅ NUEVO: traer vencidos (alerta)
   async function loadOverdueCount() {
     try {
       const data = await api.request(`${API_BASE}/api/alerts/overdue-loans`);
       setOverdueCount(Array.isArray(data) ? data.length : 0);
     } catch {
-      // si algo falla, no rompemos la UI
       setOverdueCount(0);
     }
   }
 
   useEffect(() => {
     if (logged) {
-      loadMe().catch(() => {
-        // ignore
-      });
-
-      // cargar vencidos al inicio y refrescar cada 60s
+      loadMe().catch(() => {});
       loadOverdueCount();
       const id = setInterval(loadOverdueCount, 60000);
       return () => clearInterval(id);
@@ -109,155 +102,184 @@ export default function App() {
   const role = me?.role || getRole();
   const username = me?.username || "-";
 
-const navItems = [
-  { key: "dashboard", label: "Inicio", icon: <IconReport /> },
+  const navItems = [
+    { key: "dashboard", label: "Inicio", icon: <IconReport /> },
 
-  {
-    key: "dresses",
-    label: "Vestidos",
-    icon: <IconFabric />,
-    children: [
-      { key: "dresses_create", label: "Crear vestido" },
-      { key: "dresses_list", label: "Listar vestidos" }
-    ]
-  },
+    {
+      key: "dresses",
+      label: "Vestidos",
+      icon: <IconFabric />,
+      children: [
+        { key: "dresses_create", label: "Crear vestido" },
+        { key: "dresses_list", label: "Listar vestidos" }
+      ]
+    },
 
-  { key: "capsules", label: "Cápsulas", icon: <IconFabric /> },
+    { key: "capsules", label: "Cápsulas", icon: <IconFabric /> },
 
-  {
-    key: "fabrics_group",
-    label: "Telas",
-    icon: <IconFabric />,
-    children: [
-      { key: "fabrics", label: "Telas" },
-      { key: "rolls", label: "Rollos" },
-      { key: "movements", label: "Movimientos de rollos" }
-    ]
-  },
+    {
+      key: "fabrics_group",
+      label: "Telas",
+      icon: <IconFabric />,
+      children: [
+        { key: "fabrics", label: "Telas" },
+        { key: "rolls", label: "Rollos" },
+        { key: "movements", label: "Movimientos de rollos" }
+      ]
+    },
 
-  {
-    key: "dress_loans",
-    label: (
-      <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-        Préstamos
-        {overdueCount > 0 && (
-          <Badge variant="red" pulse>
-            {overdueCount}
-          </Badge>
-        )}
-      </span>
-    ),
-    icon: <IconMove />
-  },
+    {
+      key: "dress_loans",
+      label: (
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+          Préstamos
+          {overdueCount > 0 && (
+            <Badge variant="red" pulse>
+              {overdueCount}
+            </Badge>
+          )}
+        </span>
+      ),
+      icon: <IconMove />
+    },
 
-  {
-    key: "reports",
-    label: "Reportes",
-    icon: <IconReport />,
-    children: [
-      { key: "reports_stock", label: t("reports.menu.stock.title") || "Stock actual" },
-      { key: "reports_valuation", label: t("reports.menu.values.title") || "Valuación" },
-      { key: "reports_movements", label: t("reports.menu.movements.title") || "Movimientos" }
-    ]
-  },
+    {
+      key: "reports",
+      label: "Reportes",
+      icon: <IconReport />,
+      children: [
+        {
+          key: "reports_dresses_group",
+          label: "Vestidos",
+          children: [
+            { key: "reports_dresses_status", label: "Estado de vestidos" },
+            { key: "reports_dress_loans", label: "Préstamos" },
+            { key: "reports_dresses_popularity", label: "Vestidos más usados" },
+            { key: "reports_dress_sales", label: "Ventas de vestidos" }
+          ]
+        },
+        {
+          key: "reports_fabrics_group",
+          label: "Telas",
+          children: [
+            { key: "reports_stock", label: t("reports.menu.stock.title") || "Stock actual" },
+            { key: "reports_valuation", label: t("reports.menu.values.title") || "Valuación" },
+            { key: "reports_movements", label: t("reports.menu.movements.title") || "Movimientos" }
+          ]
+        }
+      ]
+    },
 
-  {
-    key: "settings",
-    label: "Ajustes",
-    icon: <IconUsers />,
-    children: [
-      { key: "users", label: "Usuarios" },
-      { key: "suppliers", label: "Proveedores" },
-      { key: "customers", label: "Clientes" }
-    ]
-  }
-];
+    {
+      key: "settings",
+      label: "Ajustes",
+      icon: <IconUsers />,
+      children: [
+        { key: "users", label: "Usuarios" },
+        { key: "suppliers", label: "Proveedores" },
+        { key: "customers", label: "Clientes" }
+      ]
+    }
+  ];
 
-const pageTitleMap = {
-  dashboard: "Inicio",
+  const pageTitleMap = {
+    dashboard: "Inicio",
 
-  dresses: "Vestidos",
-  dresses_create: "Crear vestido",
-  dresses_list: "Listar vestidos",
+    dresses: "Vestidos",
+    dresses_create: "Crear vestido",
+    dresses_list: "Listar vestidos",
 
-  capsules: "Cápsulas",
+    capsules: "Cápsulas",
 
-  fabrics_group: "Telas",
-  fabrics: "Telas",
-  rolls: "Rollos",
-  movements: "Movimientos de rollos",
+    fabrics_group: "Telas",
+    fabrics: "Telas",
+    rolls: "Rollos",
+    movements: "Movimientos de rollos",
 
-  dress_loans: "Préstamos",
+    dress_loans: "Préstamos",
 
-  reports: "Reportes",
-  reports_stock: t("reports.menu.stock.title") || "Stock actual",
-  reports_valuation: t("reports.menu.values.title") || "Valuación",
-  reports_movements: t("reports.menu.movements.title") || "Movimientos",
+    reports: "Reportes",
+    reports_dresses_status: "Estado de vestidos",
+    reports_dress_loans: "Préstamos",
+    reports_dresses_popularity: "Vestidos más usados",
+    reports_dress_sales: "Ventas de vestidos",
+    reports_stock: t("reports.menu.stock.title") || "Stock actual",
+    reports_valuation: t("reports.menu.values.title") || "Valuación",
+    reports_movements: t("reports.menu.movements.title") || "Movimientos",
 
-  settings: "Ajustes",
-  users: "Usuarios",
-  suppliers: "Proveedores",
-  customers: "Clientes"
-};
+    settings: "Ajustes",
+    users: "Usuarios",
+    suppliers: "Proveedores",
+    customers: "Clientes"
+  };
+
   return (
-     <ToastProvider>
-     <Layout
-       brandTitle="DRESSFLOW"
-       brandSubtitle="AI • FASHION • ERP"
-       navItems={navItems}
-       currentPage={page}
-       onNavigate={setPage}
-       headerTitle={pageTitleMap[page] || "DRESSFLOW"}
-       headerSubtitle="AI • FASHION • ERP"
-       userLabel={username}
-       onLogout={logout}
-     >
-    {page === "dashboard" && (
-  <Dashboard
-    api={api}
-    apiBase={API_BASE}
-    username={username}
-  />
-)}
+    <ToastProvider>
+      <Layout
+        brandTitle="DRESSFLOW"
+        brandSubtitle="AI • FASHION • ERP"
+        navItems={navItems}
+        currentPage={page}
+        onNavigate={setPage}
+        headerTitle={pageTitleMap[page] || "DRESSFLOW"}
+        headerSubtitle="AI • FASHION • ERP"
+        userLabel={username}
+        onLogout={logout}
+      >
+        {page === "dashboard" && (
+          <Dashboard
+            api={api}
+            apiBase={API_BASE}
+            username={username}
+          />
+        )}
 
-{page === "dresses_create" && <Dresses api={api} apiBase={API_BASE} role={role} mode="create" />}
-{page === "dresses_list" && <Dresses api={api} apiBase={API_BASE} role={role} mode="list" />}
+        {page === "dresses_create" && <Dresses api={api} apiBase={API_BASE} role={role} mode="create" />}
+        {page === "dresses_list" && <Dresses api={api} apiBase={API_BASE} role={role} mode="list" />}
 
-{page === "capsules" && <Capsules api={api} apiBase={API_BASE} role={role} />}
+        {page === "capsules" && <Capsules api={api} apiBase={API_BASE} role={role} />}
 
-{page === "fabrics" && <Fabrics api={api} apiBase={API_BASE} role={role} />}
-{page === "rolls" && <Rolls api={api} apiBase={API_BASE} role={role} />}
-{page === "movements" && <Movements api={api} apiBase={API_BASE} role={role} />}
+        {page === "fabrics" && <Fabrics api={api} apiBase={API_BASE} role={role} />}
+        {page === "rolls" && <Rolls api={api} apiBase={API_BASE} role={role} />}
+        {page === "movements" && <Movements api={api} apiBase={API_BASE} role={role} />}
 
-{page === "dress_loans" && <DressLoans api={api} apiBase={API_BASE} role={role} />}
+        {page === "dress_loans" && <DressLoans api={api} apiBase={API_BASE} role={role} />}
 
-{page === "reports" && (
-  <div className="card">
-    Seleccioná un reporte desde el menú lateral.
-  </div>
-)}
+        {page === "reports" && (
+          <div className="card">
+            Seleccioná un reporte desde el menú lateral.
+          </div>
+        )}
 
-{page === "reports_stock" && (
-  <ReportsStock api={api} apiBase={API_BASE} role={role} />
-)}
+        {page === "reports_dresses_status" && <ReportsDressesStatus />}
+        {page === "reports_dress_loans" && <ReportsDressLoans />}
+        {page === "reports_dresses_popularity" && <ReportsDressesPopularity />}
+        {page === "reports_dress_sales" && <ReportsDressSales />}
 
-{page === "reports_valuation" && (
-  <ReportsValuation api={api} apiBase={API_BASE} role={role} />
-)}
+        {page === "reports_stock" && (
+          <ReportsStock api={api} apiBase={API_BASE} role={role} />
+        )}
 
-{page === "reports_movements" && (
-  <ReportsMovements api={api} apiBase={API_BASE} role={role} />
-)}
-{page === "users" && role === "ADMIN" && <Users api={api} apiBase={API_BASE} role={role} />}
-{page === "suppliers" && <Suppliers api={api} apiBase={API_BASE} role={role} />}
+        {page === "reports_valuation" && (
+          <ReportsValuation api={api} apiBase={API_BASE} role={role} />
+        )}
 
-{page === "customers" && (
-  <div className="card">
-    <h3>Clientes</h3>
-    <div className="page-sub">Próximamente.</div>
-  </div>
-)}
-    </Layout>
+        {page === "reports_movements" && (
+          <ReportsMovements api={api} apiBase={API_BASE} role={role} />
+        )}
+
+        {page === "users" && role === "ADMIN" && <Users api={api} apiBase={API_BASE} role={role} />}
+        {page === "suppliers" && <Suppliers api={api} apiBase={API_BASE} role={role} />}
+
+        {page === "customers" && (
+          <div className="card">
+            <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 8 }}>
+              Clientes
+            </div>
+            <div className="page-sub">Próximamente.</div>
+          </div>
+        )}
+      </Layout>
     </ToastProvider>
   );
 }

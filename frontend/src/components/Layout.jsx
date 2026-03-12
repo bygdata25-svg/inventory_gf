@@ -36,9 +36,16 @@ export default function Layout({
 
     for (const item of navItems) {
       if (item.key === pageKey) return item.label;
+
       if (Array.isArray(item.children)) {
-        const child = item.children.find((c) => c.key === pageKey);
-        if (child) return child.label;
+        for (const child of item.children) {
+          if (child.key === pageKey) return child.label;
+
+          if (Array.isArray(child.children)) {
+            const grandChild = child.children.find((g) => g.key === pageKey);
+            if (grandChild) return grandChild.label;
+          }
+        }
       }
     }
 
@@ -49,26 +56,50 @@ export default function Layout({
     switch (pageKey) {
       case "dashboard":
         return "Bienvenido a tu panel de control de DressFlow";
+
       case "dresses":
-      case "dress_create":
-      case "dress_list":
+      case "dresses_create":
+      case "dresses_list":
         return "Gestioná tu catálogo de vestidos, estados y disponibilidad.";
+
       case "capsules":
         return "Organizá cápsulas y colecciones.";
+
       case "fabrics_group":
       case "fabrics":
-      case "fabric_rolls":
-      case "fabric_movements":
+      case "rolls":
+      case "movements":
         return "Controlá telas, rollos y movimientos de stock.";
-      case "loans":
+
+      case "dress_loans":
         return "Administrá préstamos y devoluciones de prendas.";
+
       case "reports":
         return "Visualizá reportes y métricas de tu operación.";
+
+      case "reports_dresses_status":
+        return "Estado general y distribución del inventario de vestidos.";
+
+      case "reports_dress_loans":
+        return "Consultá préstamos activos, vencidos y devueltos.";
+
+      case "reports_dresses_popularity":
+        return "Identificá los vestidos con mayor rotación y uso.";
+
+      case "reports_dress_sales":
+        return "Analizá ventas y facturación de vestidos.";
+
+      case "reports_stock":
+      case "reports_valuation":
+      case "reports_movements":
+        return "Reportes operativos y de control de telas y rollos.";
+
       case "settings":
       case "users":
       case "suppliers":
-      case "clients":
+      case "customers":
         return "Configurá usuarios, clientes y parámetros del sistema.";
+
       default:
         return "";
     }
@@ -86,7 +117,11 @@ export default function Layout({
 
   const reportsChildren = useMemo(() => {
     const item = navItems.find((x) => x.key === "reports");
-    return item?.children || [];
+    if (!item?.children) return [];
+
+    return item.children.flatMap((child) =>
+      Array.isArray(child.children) ? child.children : [child]
+    );
   }, [navItems]);
 
   const settingsChildren = useMemo(() => {
@@ -158,17 +193,47 @@ export default function Layout({
 
         {parentActive && (
           <div className="nav-sub">
-            {it.children.map((ch) => (
-              <button
-                key={ch.key}
-                className={`nav-sub-btn ${currentPage === ch.key ? "active" : ""}`}
-                onClick={() => go(ch.key)}
-                type="button"
-              >
-                <span className="nav-sub-dot" />
-                <span className="nav-sub-label">{ch.label}</span>
-              </button>
-            ))}
+            {it.children.map((ch) => {
+              const hasNestedChildren = Array.isArray(ch.children) && ch.children.length > 0;
+
+              if (!hasNestedChildren) {
+                return (
+                  <button
+                    key={ch.key}
+                    className={`nav-sub-btn ${currentPage === ch.key ? "active" : ""}`}
+                    onClick={() => go(ch.key)}
+                    type="button"
+                  >
+                    <span className="nav-sub-dot" />
+                    <span className="nav-sub-label">{ch.label}</span>
+                  </button>
+                );
+              }
+
+              const nestedActive = ch.children.some((g) => g.key === currentPage);
+
+              return (
+                <div key={ch.key} className="nav-sub-group">
+                  <div className={`nav-sub-group-title ${nestedActive ? "active" : ""}`}>
+                    {ch.label}
+                  </div>
+
+                  <div className="nav-sub-nested">
+                    {ch.children.map((g) => (
+                      <button
+                        key={g.key}
+                        className={`nav-sub-btn nav-sub-btn-nested ${currentPage === g.key ? "active" : ""}`}
+                        onClick={() => go(g.key)}
+                        type="button"
+                      >
+                        <span className="nav-sub-dot" />
+                        <span className="nav-sub-label">{g.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
