@@ -26,6 +26,7 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
   const [loading, setLoading] = useState(false);
   const [loadingCapsules, setLoadingCapsules] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const [selectedDressId, setSelectedDressId] = useState(null);
 
@@ -193,6 +194,10 @@ async function loadAllDresses() {
       clearPhotoSelection();
 
       await loadAllDresses();
+
+      setError("");
+      setSuccess("Vestido creado correctamente");
+      setTimeout(() => setSuccess(""), 3000);
 } catch (e) {
   console.error("createDress error:", e);
 
@@ -385,6 +390,12 @@ async function loadAllDresses() {
 
   return (
     <div>
+       {success && (
+      <div className="df-toast df-toast-success">
+        <span className="df-toast-icon">✓</span>
+        <span>{success}</span>
+      </div>
+    )}
 
       {error && <div className="alert alert-error">{String(error)}</div>}
 
@@ -859,6 +870,60 @@ async function loadAllDresses() {
       )}
 
       <style>{`
+        .df-toast{
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1200;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(47,125,98,.20);
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 14px 30px rgba(17,17,17,.12);
+  backdrop-filter: blur(10px);
+  animation: dfToastIn .25s ease;
+  color: #1F5E48;
+  font-weight: 700;
+}
+
+.df-toast-success{
+  border-color: rgba(47,125,98,.22);
+}
+
+.df-toast-icon{
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(47,125,98,.12);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+@keyframes dfToastIn{
+  from{
+    opacity: 0;
+    transform: translateY(-8px) translateX(8px);
+  }
+  to{
+    opacity: 1;
+    transform: translateY(0) translateX(0);
+  }
+}
+
+@media (max-width: 720px){
+  .df-toast{
+    left: 12px;
+    right: 12px;
+    top: 12px;
+    width: auto;
+  }
+}
         .dress-row:hover td{
           background: rgba(17,17,17,.02);
         }
