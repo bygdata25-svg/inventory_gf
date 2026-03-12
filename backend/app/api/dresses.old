@@ -1,13 +1,12 @@
 from math import ceil
-from io import BytesIO
+from pathlib import Path
+from uuid import uuid4
+import shutil
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 from pydantic import BaseModel
-
-import cloudinary
-import cloudinary.uploader
 
 from app.db.session import get_db
 from app.models.user import User
@@ -16,56 +15,27 @@ from app.models.capsule import Capsule
 from app.schemas.dress import DressOut, DressListOut
 from app.core.authz import get_current_user
 
-import os
-
 router = APIRouter(prefix="/api/dresses", tags=["Dresses"])
 
-cloudinary.config(
-    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
-    api_key=os.getenv("CLOUDINARY_API_KEY"),
-    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
-    secure=True,
-)
+UPLOAD_DIR = Path("uploads/dresses")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def save_uploaded_photo(photo: UploadFile | None) -> str | None:
     if not photo or not photo.filename:
         return None
 
-    ext = photo.filename.lower().rsplit(".", 1)[-1] if "." in photo.filename else ""
-    if f".{ext}" not in {".jpg", ".jpeg", ".png", ".webp"}:
-        raise HTTPException(status_code=400, detail="Formato de imagen inválido")
+    ext = Path(photo.filename).suffix.lower()
+    if ext not in {".jpg", ".jpeg", ".png", ".webp"}:
+        raise HTTPException(status_code=400, detail="Invalid image format")
 
-    try:
-        content = photo.file.read()
-        if not content:
-            raise HTTPException(status_code=400, detail="Archivo vacío")
+    filename = f"{uuid4().hex}{ext}"
+    file_path = UPLOAD_DIR / filename
 
-        result = cloudinary.uploader.upload(
-            BytesIO(content),
-            folder="dressflow/dresses",
-            resource_type="image",
-            use_filename=True,
-            unique_filename=True,
-            overwrite=False,
-        )
+    with file_path.open("wb") as buffer:
+        shutil.copyfileobj(photo.file, buffer)
 
-        secure_url = result.get("secure_url")
-        if not secure_url:
-            raise HTTPException(status_code=500, detail="Cloudinary no devolvió URL")
-
-        return secure_url
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error subiendo imagen: {str(e)}")
-    finally:
-        try:
-            photo.file.close()
-        except Exception:
-            pass
-
+    return f"/uploads/dresses/{filename}"
 
 @router.post("", response_model=DressOut)
 def create_dress(
@@ -122,6 +92,7 @@ def create_dress(
         raise
     except Exception as e:
         db.rollback()
+        print("CREATE_DRESS_ERROR:", repr(e))
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -203,9 +174,9 @@ def list_dresses(
 
     items = []
     for dress, capsule_name in rows:
-      item = DressOut.model_validate(dress)
-      item.capsule_name = capsule_name
-      items.append(item)
+        item = DressOut.model_validate(dress)
+        item.capsule_name = capsule_name
+        items.append(item)
 
     return DressListOut(
         items=items,
