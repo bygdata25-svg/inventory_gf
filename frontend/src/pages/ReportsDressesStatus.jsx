@@ -32,28 +32,32 @@ export default function ReportsDressesStatus({ api, apiBase }) {
   const [items, setItems] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
   async function load() {
-    setLoading(true);
-    setError("");
+  setLoading(true);
+  setError("");
 
-    try {
-      const data = await api.request(`${apiBase}/api/dresses?page=1&page_size=500`);
-      setItems(Array.isArray(data?.items) ? data.items : []);
-    } catch (e) {
-      const detail =
-        typeof e?.detail === "string"
-          ? e.detail
-          : typeof e?.message === "string"
-            ? e.message
-            : "No se pudo cargar el reporte de vestidos";
+  try {
+    const data = await api.request(`${apiBase}/api/dresses?page=1&page_size=100`);
+    setItems(Array.isArray(data?.items) ? data.items : []);
+  } catch (e) {
+    let message = "No se pudo cargar el reporte de vestidos";
 
-      setError(detail);
-      setItems([]);
-    } finally {
-      setLoading(false);
+    if (typeof e?.detail === "string") {
+      message = e.detail;
+    } else if (Array.isArray(e?.detail)) {
+      message = e.detail.map((x) => x?.msg || JSON.stringify(x)).join(" | ");
+    } else if (e?.detail && typeof e.detail === "object") {
+      message = JSON.stringify(e.detail, null, 2);
+    } else if (typeof e?.message === "string") {
+      message = e.message;
     }
+
+    setError(message);
+    setItems([]);
+  } finally {
+    setLoading(false);
   }
+}
 
   useEffect(() => {
     load().catch(() => {});
