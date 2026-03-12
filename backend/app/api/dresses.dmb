@@ -37,11 +37,11 @@ def save_uploaded_photo(photo: UploadFile | None) -> str | None:
 
     return f"/uploads/dresses/{filename}"
 
+
 @router.post("", response_model=DressOut)
 def create_dress(
     code: str = Form(...),
     name: str = Form(...),
-    description: str | None = Form(default=None),
     color: str | None = Form(default=None),
     size: str | None = Form(default=None),
     price: float | None = Form(default=None),
@@ -53,48 +53,41 @@ def create_dress(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    try:
-        if current_user.role not in ("ADMIN", "OPERATOR"):
-            raise HTTPException(status_code=403, detail="Forbidden")
+    if current_user.role not in ("ADMIN", "OPERATOR"):
+        raise HTTPException(status_code=403, detail="Forbidden")
 
-        exists = db.scalar(select(Dress).where(Dress.code == code))
-        if exists:
-            raise HTTPException(status_code=409, detail="Dress code already exists")
+    exists = db.scalar(select(Dress).where(Dress.code == code))
+    if exists:
+        raise HTTPException(status_code=409, detail="Dress code already exists")
 
-        if capsule_id is not None:
-            capsule = db.get(Capsule, capsule_id)
-            if not capsule:
-                raise HTTPException(status_code=404, detail="Capsule not found")
+    if capsule_id is not None:
+        capsule = db.get(Capsule, capsule_id)
+        if not capsule:
+            raise HTTPException(status_code=404, detail="Capsule not found")
 
-        photo_url = save_uploaded_photo(photo)
+    photo_url = save_uploaded_photo(photo)
 
-        dress = Dress(
-            code=code,
-            name=name,
-            color=color,
-            size=size,
-            price=price,
-            location=location,
-            notes=notes,
-            status=status,
-            capsule_id=capsule_id,
-            photo_url=photo_url,
-        )
+    dress = Dress(
+        code=code,
+        name=name,
+        description=description,
+        color=color,
+        size=size,
+        price=price,
+        location=location,
+        notes=notes,
+        status=status,
+        capsule_id=capsule_id,
+        photo_url=photo_url,
+    )
 
-        db.add(dress)
-        db.commit()
-        db.refresh(dress)
+    db.add(dress)
+    db.commit()
+    db.refresh(dress)
 
-        result = DressOut.model_validate(dress)
-        result.capsule_name = dress.capsule.name if dress.capsule else None
-        return result
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        print("CREATE_DRESS_ERROR:", repr(e))
-        raise HTTPException(status_code=500, detail=str(e))
+    result = DressOut.model_validate(dress)
+    result.capsule_name = dress.capsule.name if dress.capsule else None
+    return result
 
 
 @router.get("", response_model=DressListOut)
