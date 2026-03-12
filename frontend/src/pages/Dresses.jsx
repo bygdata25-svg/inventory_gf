@@ -366,17 +366,16 @@ async function loadAllDresses() {
   const pages = Math.max(1, Math.ceil(total / pageSize));
 
   const paginatedItems = useMemo(() => {
-    const safePage = Math.min(page, pages);
-    const start = (safePage - 1) * pageSize;
-    const end = start + pageSize;
-    return filteredItems.slice(start, end);
-  }, [filteredItems, page, pages]);
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
+  return filteredItems.slice(start, end);
+  }, [filteredItems, page]);
 
   useEffect(() => {
     if (page > pages) {
       setPage(pages);
     }
-  }, [page, pages]);
+  }, [pages]);
 
   if (selectedDressId) {
     return (
@@ -608,6 +607,9 @@ async function loadAllDresses() {
           <div style={{ marginBottom: 10, opacity: 0.8 }}>
             Total: {total} vestido(s)
           </div>
+          <div style={{ marginBottom: 10, opacity: 0.8 }}>
+            Mostrando {paginatedItems.length} de {total} vestidos
+          </div>
 
           <table>
             <thead>
@@ -743,23 +745,23 @@ async function loadAllDresses() {
             </div>
 
             <div style={{ display: "flex", gap: 8 }}>
-              <button
-                className="btn"
-                type="button"
-                disabled={page <= 1 || loading} 
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                Anterior
-              </button>
+            <button
+	      className="btn"
+              type="button"
+              disabled={page === 1 || loading}
+              onClick={() => setPage(page - 1)}
+            >
+              Anterior
+            </button>
 
-              <button
-                className="btn"
-                type="button"
-                disabled={page <= 1 || loading}
-                onClick={() => setPage((p) => Math.min(pages, p + 1))}
-              >
-                Siguiente
-              </button>
+            <button
+              className="btn"
+              type="button"
+              disabled={page === pages || loading}
+              onClick={() => setPage(page + 1)}
+            >
+              Siguiente
+            </button>
             </div>
           </div>
         </>
@@ -952,16 +954,19 @@ async function loadAllDresses() {
         }
 
         .dress-upload-preview{
-          width: 180px;
-          height: 220px;
-          border-radius: 14px;
-          border: 1px dashed rgba(0,0,0,.18);
-          overflow:hidden;
-          background: rgba(255,255,255,.7);
-          display:flex;
-          align-items:center;
-          justify-content:center;
-        }
+	  width: 180px;
+	  height: 220px;
+	  border-radius: 14px;
+	  border: 1px dashed rgba(0,0,0,.18);
+	  overflow:hidden;
+	  background: rgba(255,255,255,.7);
+
+	  display:flex;
+	  align-items:center;
+	  justify-content:center;
+
+	  margin: 0 auto;   /* 👈 centra horizontalmente */
+	}
 
         .dress-upload-image{
           width:100%;
