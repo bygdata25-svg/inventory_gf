@@ -73,8 +73,6 @@ export default function DressLoans({ api, apiBase }) {
 
   return (
     <div>
-      <h2>Préstamos</h2>
-
       <div style={{ marginBottom: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
         <button onClick={() => setFilter("OPEN")}>Abiertos</button>
         <button onClick={() => setFilter("OVERDUE")}>Vencidos</button>
