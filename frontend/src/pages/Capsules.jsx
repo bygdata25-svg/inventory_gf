@@ -75,8 +75,8 @@ export default function Capsules({ api, apiBase, role }) {
               onChange={(e) => setName(e.target.value)}
               required
             />
-            <button type="submit" disabled={saving}>
-              {saving ? "Guardando..." : "Crear"}
+            <button className="btn" type="submit">
+             Crear
             </button>
           </div>
         </form>

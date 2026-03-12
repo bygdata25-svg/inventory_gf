@@ -516,7 +516,9 @@ async function loadAllDresses() {
           )}
 
           <div style={{ marginTop: 12 }}>
-            <button type="submit">{t("actions.create") || "Crear"}</button>
+           <button className="btn" type="submit">
+           {t("actions.create") || "Crear"}
+           </button>
           </div>
         </form>
       )}
@@ -587,9 +589,11 @@ async function loadAllDresses() {
                 value={filterForm.price_max}
                 onChange={(e) => setFilterForm({ ...filterForm, price_max: e.target.value })}
               />
+              <button className="btn" type="submit">
+                {t("actions.search") || "Buscar"}
+              </button>
 
-              <button type="submit">{t("actions.search") || "Buscar"}</button>
-              <button type="button" onClick={clearFilters}>
+              <button className="btn btn-secondary" type="button" onClick={clearFilters}>
                 {t("actions.clear") || "Limpiar"}
               </button>
             </div>
@@ -740,16 +744,18 @@ async function loadAllDresses() {
 
             <div style={{ display: "flex", gap: 8 }}>
               <button
+                className="btn"
                 type="button"
-                disabled={page <= 1 || loading}
+                disabled={page <= 1 || loading} 
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
               >
                 Anterior
               </button>
 
               <button
+                className="btn"
                 type="button"
-                disabled={page >= pages || loading}
+                disabled={page <= 1 || loading}
                 onClick={() => setPage((p) => Math.min(pages, p + 1))}
               >
                 Siguiente

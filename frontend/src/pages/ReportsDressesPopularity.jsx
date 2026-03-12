@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Badge from "../components/Badge";
+import { dressStatusLabel } from "../utils/status";
 
 export default function ReportsDressesPopularity({ api, apiBase }) {
   const [loans, setLoans] = useState([]);
@@ -139,7 +140,10 @@ export default function ReportsDressesPopularity({ api, apiBase }) {
                   <td style={{ fontWeight: 700 }}>{row.name}</td>
                   <td>{row.color}</td>
                   <td>{row.size}</td>
-                  <td>{row.status}</td>
+                  <td><Badge variant="default">
+	              {dressStatusLabel(row.status)}
+                      </Badge>
+                  </td>
                   <td>{row.count}</td>
                 </tr>
               ))}
