@@ -27,6 +27,7 @@ import Capsules from "./pages/Capsules";
 import ReportsStock from "./pages/ReportsStock";
 import ReportsValuation from "./pages/ReportsValuation";
 import ReportsMovements from "./pages/ReportsMovements";
+import { ToastProvider } from "./context/ToastContext";
 
 // const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://inventory-gf.onrender.com";
@@ -199,6 +200,7 @@ const pageTitleMap = {
   customers: "Clientes"
 };
   return (
+     <ToastProvider>
      <Layout
        brandTitle="DRESSFLOW"
        brandSubtitle="AI • FASHION • ERP"
@@ -256,5 +258,6 @@ const pageTitleMap = {
   </div>
 )}
     </Layout>
+    </ToastProvider>
   );
 }

@@ -4,6 +4,7 @@ import { dressStatusLabel } from "../utils/status";
 import { t } from "../i18n";
 import DressDetail from "./DressDetailPage";
 import { DRESS_LOCATIONS } from "../constants/dressLocations";
+import { useToast } from "../context/ToastContext";
 
 function resolvePhoto(photoUrl, apiBase) {
   if (!photoUrl) return null;
@@ -17,6 +18,8 @@ function normalizeText(value) {
 
 export default function Dresses({ api, apiBase, role, mode = "list" }) {
   const canEdit = role === "ADMIN" || role === "OPERATOR";
+  
+  const { showToast } = useToast();
   const pageSize = 10;
   const showCreate = mode === "create";
   const showList = mode === "list";
@@ -194,10 +197,10 @@ async function loadAllDresses() {
       clearPhotoSelection();
 
       await loadAllDresses();
+      
 
       setError("");
-      setSuccess("Vestido creado correctamente");
-      setTimeout(() => setSuccess(""), 3000);
+      showToast("Vestido creado correctamente");
 } catch (e) {
   console.error("createDress error:", e);
 

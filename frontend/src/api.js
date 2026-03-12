@@ -1,4 +1,5 @@
 import { clearAuth, getToken } from "./auth";
+import { showGlobalToast } from "./toast";
 
 export function makeApiClient({ onUnauthorized } = {}) {
   async function request(url, options = {}) {
@@ -38,13 +39,21 @@ export function makeApiClient({ onUnauthorized } = {}) {
     } else {
       data = await r.text();
     }
+	if (!r.ok) {
+	  const message =
+	    typeof data === "string"
+	      ? data
+	      : data?.detail || "Error en la operación";
 
-    if (!r.ok) {
-      throw { status: r.status, detail: data };
-    }
+	  showGlobalToast(message, "error");
 
-    return data;
-  }
+	  throw { status: r.status, detail: data };
+	}
 
-  return { request };
-}
+	if (options.method && options.method !== "GET") {
+	  showGlobalToast("Operación realizada correctamente", "success");
+	}
+
+	return data;
+
+	}
