@@ -253,10 +253,15 @@ export default function App() {
         {page === "reports_dresses_status" && (
           <ReportsDressesStatus api={api} apiBase={API_BASE} role={role} />
         )}
-        {page === "reports_dress_loans" && <ReportsDressLoans />}
-        {page === "reports_dresses_popularity" && <ReportsDressesPopularity />}
-        {page === "reports_dress_sales" && <ReportsDressSales />}
-
+        {page === "reports_dress_loans" && (
+          <ReportsDressLoans api={api} apiBase={API_BASE} role={role} />
+        )}
+        {page === "reports_dresses_popularity" && (
+          <ReportsDressesPopularity api={api} apiBase={API_BASE} role={role} />
+        )}
+        {page === "reports_dress_sales" && (
+         <ReportsDressSales api={api} apiBase={API_BASE} role={role} />
+        )}
         {page === "reports_stock" && (
           <ReportsStock api={api} apiBase={API_BASE} role={role} />
         )}
