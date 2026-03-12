@@ -250,8 +250,9 @@ export default function App() {
             Seleccioná un reporte desde el menú lateral.
           </div>
         )}
-
-        {page === "reports_dresses_status" && <ReportsDressesStatus />}
+        {page === "reports_dresses_status" && (
+          <ReportsDressesStatus api={api} apiBase={API_BASE} role={role} />
+        )}
         {page === "reports_dress_loans" && <ReportsDressLoans />}
         {page === "reports_dresses_popularity" && <ReportsDressesPopularity />}
         {page === "reports_dress_sales" && <ReportsDressSales />}
