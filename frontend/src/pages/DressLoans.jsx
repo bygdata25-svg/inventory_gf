@@ -1,4 +1,3 @@
-// frontend/src/pages/DressLoans.jsx
 import { useEffect, useState } from "react";
 import Badge from "../components/Badge";
 import { isOverdue, loanStatusLabel } from "../utils/status";
@@ -17,7 +16,7 @@ export default function DressLoans({ api, apiBase }) {
 
     if (filter === "OVERDUE") {
       url = `${apiBase}/api/dress-loans?overdue=true`;
-    } else if (filter !== "ALL") {
+    } else if (filter && filter !== "ALL") {
       url = `${apiBase}/api/dress-loans?status=${filter}`;
     }
 
@@ -25,7 +24,19 @@ export default function DressLoans({ api, apiBase }) {
       const data = await api.request(url);
       setItems(Array.isArray(data) ? data : []);
     } catch (e) {
-      setError(e?.detail || "Error");
+      let message = "Error cargando préstamos";
+
+      if (typeof e?.detail === "string") {
+        message = e.detail;
+      } else if (Array.isArray(e?.detail)) {
+        message = e.detail.map((x) => x?.msg || JSON.stringify(x)).join(" | ");
+      } else if (e?.detail && typeof e.detail === "object") {
+        message = JSON.stringify(e.detail, null, 2);
+      } else if (typeof e?.message === "string") {
+        message = e.message;
+      }
+
+      setError(message);
       setItems([]);
     } finally {
       setLoading(false);
@@ -34,6 +45,7 @@ export default function DressLoans({ api, apiBase }) {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   async function returnLoan(id) {
@@ -48,7 +60,19 @@ export default function DressLoans({ api, apiBase }) {
       });
       load();
     } catch (e) {
-      alert(e?.detail || "Error registrando devolución");
+      let message = "Error registrando devolución";
+
+      if (typeof e?.detail === "string") {
+        message = e.detail;
+      } else if (Array.isArray(e?.detail)) {
+        message = e.detail.map((x) => x?.msg || JSON.stringify(x)).join(" | ");
+      } else if (e?.detail && typeof e.detail === "object") {
+        message = JSON.stringify(e.detail, null, 2);
+      } else if (typeof e?.message === "string") {
+        message = e.message;
+      }
+
+      alert(message);
     }
   }
 
@@ -62,32 +86,51 @@ export default function DressLoans({ api, apiBase }) {
         </Badge>
       );
     }
+
     if (loan.status === "RETURNED") {
       return <Badge variant="green">{loanStatusLabel(loan)}</Badge>;
     }
+
     if (loan.status === "CANCELLED") {
       return <Badge variant="yellow">{loanStatusLabel(loan)}</Badge>;
     }
+
     return <Badge variant="default">{loanStatusLabel(loan)}</Badge>;
   }
 
   return (
     <div>
       <div style={{ marginBottom: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button 
-           className={`btn ${filter === "OPEN" ? "" : "btn-secondary"}`}
-           onClick={() => setFilter("OPEN")}
-         > 
-           Abiertos
+        <button
+          className={`btn ${filter === "OPEN" ? "" : "btn-secondary"}`}
+          type="button"
+          onClick={() => setFilter("OPEN")}
+        >
+          Abiertos
         </button>
-        <button className="btn btn-secondary" onClick={() => setFilter("OVERDUE")}>
-           Vencidos
+
+        <button
+          className={`btn ${filter === "OVERDUE" ? "" : "btn-secondary"}`}
+          type="button"
+          onClick={() => setFilter("OVERDUE")}
+        >
+          Vencidos
         </button>
-        <button className="btn btn-secondary" onClick={() => setFilter("RETURNED")}>
-           Devueltos
+
+        <button
+          className={`btn ${filter === "RETURNED" ? "" : "btn-secondary"}`}
+          type="button"
+          onClick={() => setFilter("RETURNED")}
+        >
+          Devueltos
         </button>
-        <button className="btn btn-secondary" onClick={() => setFilter("")}>
-           Todos
+
+        <button
+          className={`btn ${filter === "ALL" ? "" : "btn-secondary"}`}
+          type="button"
+          onClick={() => setFilter("ALL")}
+        >
+          Todos
         </button>
       </div>
 
@@ -108,8 +151,12 @@ export default function DressLoans({ api, apiBase }) {
         <tbody>
           {items.map((l) => {
             const overdue = isOverdue(l);
+
             return (
-              <tr key={l.id} style={overdue ? { background: "rgba(220,38,38,0.06)" } : undefined}>
+              <tr
+                key={l.id}
+                style={overdue ? { background: "rgba(220,38,38,0.06)" } : undefined}
+              >
                 <td>{l.dress_id}</td>
                 <td>{l.customer_name}</td>
                 <td>{new Date(l.delivered_at).toLocaleDateString()}</td>
@@ -119,17 +166,19 @@ export default function DressLoans({ api, apiBase }) {
                 </td>
                 <td>
                   {l.status === "OPEN" && (
-                    <button  
-                     className="btn"
-                     onClick={() => markReturned(row.id)}
-                     >
-                       Registrar devolución 
-                   </button>
+                    <button
+                      className="btn"
+                      type="button"
+                      onClick={() => returnLoan(l.id)}
+                    >
+                      Registrar devolución
+                    </button>
                   )}
                 </td>
               </tr>
             );
           })}
+
           {!loading && items.length === 0 && (
             <tr>
               <td colSpan={6} style={{ opacity: 0.7 }}>
