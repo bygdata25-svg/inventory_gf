@@ -43,6 +43,3 @@ class LoanOut(BaseModel):
     dress_name: str | None = None
 
     model_config = {"from_attributes": True}
-
-    class Config:
-        from_attributes = True
