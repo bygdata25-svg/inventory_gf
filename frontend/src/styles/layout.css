@@ -882,9 +882,10 @@ tr:hover td{
 
 .df-pagebar-title{
   margin:0;
-  font-size: 32px;
+  font-size: 26px;
   line-height: 1.08;
-  letter-spacing: -.03em;
+  letter-spacing: -.02em;
+  font-weight: 700;
   color:#231A2B;
 }
 

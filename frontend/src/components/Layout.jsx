@@ -5,6 +5,14 @@ function getInitial(userLabel) {
   return String(userLabel).trim().charAt(0).toUpperCase();
 }
 
+function greeting() {
+  const h = new Date().getHours();
+
+  if (h < 12) return "Buenos días";
+  if (h < 19) return "Buenas tardes";
+  return "Buenas noches";
+}
+
 export default function Layout({
   brandTitle = "DressFlow",
   brandSubtitle = "AI • FASHION • ERP",
@@ -32,10 +40,7 @@ export default function Layout({
   }, []);
 
   function getPageTitle(pageKey) {
-    if (pageKey === "dashboard") return (
-  <>
-    Hola, {userLabel} <span className="df-star">✦</span>
-  </>
+     if (pageKey === "dashboard") return `${greeting()}, ${userLabel} ✧`;
 ); 
 
     for (const item of navItems) {
