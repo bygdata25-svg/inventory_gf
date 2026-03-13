@@ -39,6 +39,7 @@ export default function App() {
   const [me, setMe] = useState(null);
   const [sessionMsg, setSessionMsg] = useState("");
   const [overdueCount, setOverdueCount] = useState(0);
+  const [loanDressId, setLoanDressId] = useState(null);
 
   const api = useMemo(
     () =>
@@ -243,7 +244,24 @@ export default function App() {
         {page === "rolls" && <Rolls api={api} apiBase={API_BASE} role={role} />}
         {page === "movements" && <Movements api={api} apiBase={API_BASE} role={role} />}
 
-        {page === "dress_loans" && <DressLoans api={api} apiBase={API_BASE} role={role} />}
+        {page === "dress_loans" && !loanDressId && (
+             <DressLoans
+               api={api}
+               apiBase={API_BASE}
+               role={role}
+               onOpenDress={(dressId) => setLoanDressId(dressId)}
+             />
+        )} 
+        {page === "dress_loans" && loanDressId && (
+             <Dresses
+               api={api}
+               apiBase={API_BASE}
+               role={role}
+               mode="list"
+               initialDressId={loanDressId}
+               onCloseInitialDress={() => setLoanDressId(null)}
+             />
+           )}
 
         {page === "reports" && (
           <div className="card">

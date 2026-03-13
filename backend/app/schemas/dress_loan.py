@@ -24,30 +24,25 @@ class LoanCreate(BaseModel):
 class LoanReturn(BaseModel):
     returned_by: Optional[str] = None
 
-
 class LoanOut(BaseModel):
     id: int
     dress_id: int
-
     customer_name: str
-    customer_dni: Optional[str]
-    customer_phone: Optional[str]
-    customer_email: Optional[str]
-    event_name: Optional[str]
-
+    customer_dni: str | None = None
+    customer_phone: str | None = None
+    customer_email: EmailStr | None = None
+    event_name: str | None = None
     delivered_at: datetime
     due_at: datetime
-    loan_days: Optional[int]
-
-    delivered_by_user_id: int
-    picked_up_by: Optional[str]
-
-    returned_at: Optional[datetime]
-    returned_by: Optional[str]
-    received_by_user_id: Optional[int]
-
+    returned_at: datetime | None = None
+    loan_days: int | None = None
+    picked_up_by: str | None = None
+    notes: str | None = None
     status: LoanStatus
-    notes: Optional[str]
+    returned_by: str | None = None
+    dress_name: str | None = None
+
+    model_config = {"from_attributes": True}
 
     class Config:
         from_attributes = True

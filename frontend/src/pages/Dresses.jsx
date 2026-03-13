@@ -16,7 +16,14 @@ function normalizeText(value) {
   return String(value || "").trim().toLowerCase();
 }
 
-export default function Dresses({ api, apiBase, role, mode = "list" }) {
+export default function Dresses({
+  api,
+  apiBase,
+  role,
+  mode = "list",
+  initialDressId = null,
+  onCloseInitialDress
+}) {
   const canEdit = role === "ADMIN" || role === "OPERATOR";
   
   const { showToast } = useToast();
@@ -32,6 +39,11 @@ export default function Dresses({ api, apiBase, role, mode = "list" }) {
   const [success, setSuccess] = useState("");
 
   const [selectedDressId, setSelectedDressId] = useState(null);
+  useEffect(() => {
+  if (initialDressId) {
+    setSelectedDressId(initialDressId);
+  }
+}, [initialDressId]);
 
   const [page, setPage] = useState(1);
 
@@ -384,7 +396,10 @@ async function loadAllDresses() {
         apiBase={apiBase}
         role={role}
         dressId={selectedDressId}
-        onBack={() => setSelectedDressId(null)}
+        onBack={() => {
+               setSelectedDressId(null);
+               onCloseInitialDress?.();
+             }}
         onRefresh={loadAllDresses}
       />
     );

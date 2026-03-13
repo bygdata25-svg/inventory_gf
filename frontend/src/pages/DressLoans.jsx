@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Badge from "../components/Badge";
 import { isOverdue, loanStatusLabel } from "../utils/status";
 
-export default function DressLoans({ api, apiBase }) {
+export default function DressLoans({ api, apiBase, onOpenDress }) {
   const [items, setItems] = useState([]);
   const [filter, setFilter] = useState("OPEN");
   const [loading, setLoading] = useState(false);
@@ -157,13 +157,28 @@ export default function DressLoans({ api, apiBase }) {
                 key={l.id}
                 style={overdue ? { background: "rgba(220,38,38,0.06)" } : undefined}
               >
-                <td>{l.dress_id}</td>
+                <td>
+                  <button
+                    type="button"
+                    className="loan-dress-link"
+                    onClick={() => onOpenDress?.(l.dress_id)}
+                    title="Ver detalle del vestido"
+                  >
+                    <div className="loan-dress-name">
+                      {l.dress_name || `Vestido #${l.dress_id}`}
+                    </div>
+                    <div className="loan-dress-id">#{l.dress_id}</div>
+                  </button>
+                </td>
+
                 <td>{l.customer_name}</td>
                 <td>{new Date(l.delivered_at).toLocaleDateString()}</td>
                 <td>{new Date(l.due_at).toLocaleDateString()}</td>
+
                 <td>
                   <StatusBadge loan={l} />
                 </td>
+
                 <td>
                   {l.status === "OPEN" && (
                     <button
@@ -188,6 +203,32 @@ export default function DressLoans({ api, apiBase }) {
           )}
         </tbody>
       </table>
+
+      <style>{`
+        .loan-dress-link{
+          background: transparent;
+          border: none;
+          padding: 0;
+          margin: 0;
+          cursor: pointer;
+          text-align: left;
+          color: inherit;
+        }
+
+        .loan-dress-link:hover .loan-dress-name{
+          text-decoration: underline;
+        }
+
+        .loan-dress-name{
+          font-weight: 700;
+        }
+
+        .loan-dress-id{
+          font-size: 12px;
+          opacity: 0.65;
+          margin-top: 2px;
+        }
+      `}</style>
     </div>
   );
 }

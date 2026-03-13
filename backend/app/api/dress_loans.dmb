@@ -100,18 +100,15 @@ def return_loan(
     db.refresh(loan)
     return loan
 
-@router.get("")
+
+@router.get("", response_model=list[LoanOut])
 def list_loans(
     status: LoanStatus | None = Query(default=None),
     overdue: bool = Query(default=False),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    stmt = (
-        select(DressLoan, Dress.name)
-        .join(Dress, DressLoan.dress_id == Dress.id)
-    )
-
+    stmt = select(DressLoan)
     if status:
         stmt = stmt.where(DressLoan.status == status)
 
@@ -123,15 +120,7 @@ def list_loans(
             DressLoan.due_at < now,
         )
 
-    rows = db.execute(stmt.order_by(DressLoan.id.desc())).all()
-
-    items = []
-    for loan, dress_name in rows:
-        item = LoanOut.model_validate(loan).model_dump()
-        item["dress_name"] = dress_name
-        items.append(item)
-
-    return items
+    return list(db.scalars(stmt.order_by(DressLoan.id.desc())).all())
 
 @router.get("/by-dress/{dress_id}/open", response_model=LoanOut)
 def get_open_loan_by_dress(
