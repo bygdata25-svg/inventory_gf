@@ -6,7 +6,7 @@ const API_BASE =
   import.meta.env.VITE_API_URL || "https://inventory-gf.onrender.com";
 
 export default function Login({ onLoggedIn }) {
-  const [username, setUsername] = useState("admin");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);

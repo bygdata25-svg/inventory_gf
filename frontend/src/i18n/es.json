@@ -98,6 +98,10 @@
     "noRolls": "No hay rollos",
     "rollSnapshot": "Resumen del rollo",
     "rollSnapshotHint": "Detalle rápido del rollo seleccionado.",
+    "selectedRoll": "Rollo seleccionado",
+    "availableAfter": "Disponible después",
+
+
 
     "createMovement": "Registrar movimiento",
     "reasonPlaceholder": "Ej: salida a producción",
@@ -122,6 +126,7 @@
     "listSuppliers": "Proveedores",
     "listSuppliersHint": "Listado de proveedores disponibles.",
     "noSuppliers": "Todavía no hay proveedores.",
+    "selectSupplier": "Seleccioná proveedor",
     "username": "Usuario",
     "password": "Contraseña",
     "login": "Ingresar",

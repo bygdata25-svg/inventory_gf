@@ -74,10 +74,21 @@ export default function DressLoans({ api, apiBase }) {
   return (
     <div>
       <div style={{ marginBottom: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button onClick={() => setFilter("OPEN")}>Abiertos</button>
-        <button onClick={() => setFilter("OVERDUE")}>Vencidos</button>
-        <button onClick={() => setFilter("RETURNED")}>Devueltos</button>
-        <button onClick={() => setFilter("ALL")}>Todos</button>
+        <button 
+           className={`btn ${filter === "OPEN" ? "" : "btn-secondary"}`}
+           onClick={() => setFilter("OPEN")}
+         > 
+           Abiertos
+        </button>
+        <button className="btn btn-secondary" onClick={() => setFilter("OVERDUE")}>
+           Vencidos
+        </button>
+        <button className="btn btn-secondary" onClick={() => setFilter("RETURNED")}>
+           Devueltos
+        </button>
+        <button className="btn btn-secondary" onClick={() => setFilter("")}>
+           Todos
+        </button>
       </div>
 
       {error && <div className="alert alert-error">{String(error)}</div>}
@@ -108,7 +119,12 @@ export default function DressLoans({ api, apiBase }) {
                 </td>
                 <td>
                   {l.status === "OPEN" && (
-                    <button onClick={() => returnLoan(l.id)}>Registrar devolución</button>
+                    <button  
+                     className="btn"
+                     onClick={() => markReturned(row.id)}
+                     >
+                       Registrar devolución 
+                   </button>
                   )}
                 </td>
               </tr>
