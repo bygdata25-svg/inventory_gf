@@ -32,7 +32,11 @@ export default function Layout({
   }, []);
 
   function getPageTitle(pageKey) {
-    if (pageKey === "dashboard") return `Hola, ${userLabel} ✦`;
+    if (pageKey === "dashboard") return (
+  <>
+    Hola, {userLabel} <span className="df-star">✦</span>
+  </>
+); 
 
     for (const item of navItems) {
       if (item.key === pageKey) return item.label;

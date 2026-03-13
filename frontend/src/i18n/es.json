@@ -110,6 +110,7 @@
     "hintIn": "Entrada: suma metros",
     "hintOut": "Salida: resta metros",
     "hintAdjust": "Ajuste: fija el stock exacto",
+    "adjustHiddenForOperator": "Ajuste oculto para el Operador",
 
     "search": "Buscar",
     "searchHint": "Código, nombre, color...",

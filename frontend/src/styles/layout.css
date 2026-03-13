@@ -1189,3 +1189,9 @@ tr:hover td{
 .nav-sub-btn-nested{
   font-size: 12px;
 }
+
+.df-star{
+  color:#d4af37;
+  margin-left:6px;
+  text-shadow:0 0 6px rgba(212,175,55,.5);
+}
