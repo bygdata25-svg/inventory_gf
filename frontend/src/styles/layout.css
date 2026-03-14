@@ -856,21 +856,28 @@ tr:hover td{
   display:flex;
   align-items:center;
   gap:16px;
-  padding: 0 18px;
+  padding: 0 20px;
   background: rgba(255,255,255,.42);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(17,17,17,.06);
-  position: sticky;
+  position: relative;
   top: 0;
   z-index: 20;
 }
 
+.df-topbar-brand{
+  position:absolute;
+  left:0;
+  right:0;
+  display:flex;
+  justify-content:center;
+  pointer-events:none;
+}
+
 .df-topbar-logo{
-  height: 54px;
+  height: 64px;
   width: auto;
   object-fit: contain;
-  background: transparent;
-  display: block;
 }
 
 .df-pagebar{
