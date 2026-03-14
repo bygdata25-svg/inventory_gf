@@ -743,10 +743,12 @@ tr:hover td{
 }
 
 .dress-code{
-  font-family: "JetBrains Mono", monospace;
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: 1px;
+  font-family: var(--font-ui);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #231A2B;
+  line-height: 1.1;
 }
 
 .dress-kpis{
@@ -861,10 +863,11 @@ tr:hover td{
 }
 
 .df-topbar-logo{
-  height:38px;
-  width:auto;
-  object-fit:contain;
-  background:transparent;
+  height: 54px;
+  width: auto;
+  object-fit: contain;
+  background: transparent;
+  display: block;
 }
 
 .df-pagebar{
