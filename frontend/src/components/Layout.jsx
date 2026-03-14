@@ -271,24 +271,24 @@ export default function Layout({
       </aside>
 
       <main className="main">
-        <header className="df-topbar">
-          <button
-            className="btn btn-icon hamburger"
-            onClick={() => setSidebarOpen((v) => !v)}
-            type="button"
-            aria-label="Menu"
-            title="Menu"
-          >
-            ☰
-          </button>
+       <header className="df-topbar">
 
+        <button
+          className="btn btn-icon hamburger"
+          onClick={() => setSidebarOpen((v) => !v)}
+        >
+          ☰
+        </button>
+
+        <div className="df-topbar-logo-container">
           <img
             src="/dressflow_logo_transparent.png"
             alt="DressFlow"
             className="df-topbar-logo"
           />
-        </header>
+        </div>
 
+      </header>
         <section className="df-pagebar">
           <div className="df-pagebar-row">
             <div className="df-pagebar-left">
