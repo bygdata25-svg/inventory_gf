@@ -283,7 +283,7 @@ export default function Layout({
           </button>
 
           <img
-            src="/dressflow_topbar_logo_optical.png"
+            src="/dressflow_logo_transparent.png"
             alt="DressFlow"
             className="df-topbar-logo"
           />

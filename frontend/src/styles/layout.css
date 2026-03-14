@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap');
 :root{
   /* Lumière Couture (premium, femenino) */
   --bg: #F6F1EB;                 /* marfil */
@@ -742,9 +743,10 @@ tr:hover td{
 }
 
 .dress-code{
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 13px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 1px;
 }
 
 .dress-kpis{
@@ -859,10 +861,10 @@ tr:hover td{
 }
 
 .df-topbar-logo{
-  height: 84px;
-  width: auto;
-  display:block;
-  object-fit: contain;
+  height:38px;
+  width:auto;
+  object-fit:contain;
+  background:transparent;
 }
 
 .df-pagebar{
