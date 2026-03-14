@@ -29,6 +29,7 @@ import ReportsDressesStatus from "./pages/ReportsDressesStatus";
 import ReportsDressLoans from "./pages/ReportsDressLoans";
 import ReportsDressesPopularity from "./pages/ReportsDressesPopularity";
 import ReportsDressSales from "./pages/ReportsDressSales";
+import ReportsDressStockValue from "./pages/ReportsDressStockValue";
 import { ToastProvider } from "./context/ToastContext";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://inventory-gf.onrender.com";
@@ -156,7 +157,8 @@ export default function App() {
             { key: "reports_dresses_status", label: "Estado de vestidos" },
             { key: "reports_dress_loans", label: "Préstamos" },
             { key: "reports_dresses_popularity", label: "Vestidos más usados" },
-            { key: "reports_dress_sales", label: "Ventas de vestidos" }
+            { key: "reports_dress_sales", label: "Ventas de vestidos" },
+            { key: "reports_dress_stock_value", label: "Stock valorizado" }
           ]
         },
         {
@@ -204,6 +206,7 @@ export default function App() {
     reports_dress_loans: "Préstamos",
     reports_dresses_popularity: "Vestidos más usados",
     reports_dress_sales: "Ventas de vestidos",
+    reports_dress_stock_value: "Stock valorizado",
     reports_stock: t("reports.menu.stock.title") || "Stock actual",
     reports_valuation: t("reports.menu.values.title") || "Valuación",
     reports_movements: t("reports.menu.movements.title") || "Movimientos",
@@ -279,6 +282,9 @@ export default function App() {
         )}
         {page === "reports_dress_sales" && (
          <ReportsDressSales api={api} apiBase={API_BASE} role={role} />
+        )}
+        {page === "reports_dress_stock_value" && (
+         <ReportsDressStockValue api={api} apiBase={API_BASE} role={role} />
         )}
         {page === "reports_stock" && (
           <ReportsStock api={api} apiBase={API_BASE} role={role} />

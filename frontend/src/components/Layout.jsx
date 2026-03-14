@@ -96,6 +96,9 @@ export default function Layout({
 
       case "reports_dress_sales":
         return "Analizá ventas y facturación de vestidos.";
+      
+      case "reports_dress_stock_value":
+        return "Valorización del inventario disponible de vestidos.";
 
       case "reports_stock":
       case "reports_valuation":
